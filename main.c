@@ -3,7 +3,7 @@
 // 'C' source line config statements
 
 // FICD
-#pragma config ICS      = PGD1      // ICD Communication Channel Select bits (Communicate on PGEC1 and PGED1)
+#pragma config ICS      = PGD3      // ICD Communication Channel Select bits (Communicate on PGEC3 and PGED3)
 #pragma config JTAGEN   = OFF       // JTAG Enable bit (JTAG is disabled)
 
 // FPOR
