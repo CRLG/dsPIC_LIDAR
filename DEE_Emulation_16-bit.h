@@ -49,9 +49,9 @@
 #define NUM_DATA_EE_PAGES   3
 
 // Modify the following constants based on the specific device being used
-#if defined(__dsPIC33E__) || defined(__PIC24E__)
-#define	NUMBER_OF_INSTRUCTIONS_IN_PAGE  512
-#define	NUMBER_OF_INSTRUCTIONS_IN_ROW   64
+#if defined(__dsPIC33E__) || defined(__PIC24E__)  // Correction Nico pour dsPIC33EP256GP502: voir note d'application DS70619B
+#define	NUMBER_OF_INSTRUCTIONS_IN_PAGE  1024
+#define	NUMBER_OF_INSTRUCTIONS_IN_ROW   128
 #elif defined(__PIC24F__)
 #define	NUMBER_OF_INSTRUCTIONS_IN_PAGE  1024
 #define	NUMBER_OF_INSTRUCTIONS_IN_ROW   128
