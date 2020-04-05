@@ -1,5 +1,6 @@
 #include <xc.h>
 #include "lidar_const.h"
+#include "lidar_registers.h"
 #include "eeprom.h"
 #include "General.h"
 

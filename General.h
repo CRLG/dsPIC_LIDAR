@@ -25,21 +25,6 @@ void i2c1_init(unsigned char i2c_addr);
 #define TEMPO_10sec     (10000/PERIODE_TICK)
 #define TEMPO_15sec     (15000/PERIODE_TICK)
 
-
-typedef  enum {
-    READ_WRITE = 0,
-    READ_ONLY
-}T_TYPE_REGISTRE;    
-
-
-typedef struct {
-    unsigned char   val;
-    unsigned char   new_data;
-    T_TYPE_REGISTRE type_read_write;
-}T_dsPIC_REGISTER;    
-
-
-extern T_dsPIC_REGISTER dsPIC_reg[];
 extern unsigned short cptPerteComMaster;
 
 #endif
