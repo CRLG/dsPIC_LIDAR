@@ -35,6 +35,21 @@
 #pragma config GCP      = OFF       // General Segment Code-Protect bit (General Segment Code protect is Disabled)
 // #pragma config statements should precede project file includes.
 
+// Horloge sur le dsPIC : 
+//      - FRC = 7.37 MHz                                    -> Fréquence générée en interne de base 
+// Avec activation de la PLL, on a :
+//      - Fosc = FRC * (M / (N1 * N2))  (voir note d'application Microchip AN70227E)
+//          - M = 50 (voir PLLDIV)
+//          - N1 = 2 (voir PLLPRE)
+//          - N2 = 4 (void PLLPOST)
+//        => Fosc = 7.37 * (50/(2*4)) = 46.0625MHz
+//      - Fcy = (Fosc / 2) = 23.03125 MHz (Tcy = 43.41nsec) -> Fréquence pour les instructions CPU
+//      - Fp = Fcy                                          -> Fréquence de base pour les prériphériques (Timer, I2C, UART, ...)
+#define F_FOSC       46062500   // [MHz]
+#define F_FCY       (F_OSC/2)   // Fréquence pour l'exécution des instructions
+#define F_FP        F_CYCLE     // Fréquence de base pour les périphériques
+
+
 #include <xc.h>
 #include <libpic30.h>
 #include "eeprom.h"
@@ -42,7 +57,6 @@
 #include "General.h"
 
 // Constates
-#define TIMER_PERIOD  0x3FFF
 
 // Variables globales
 volatile unsigned char tick_timer=0;
@@ -51,6 +65,7 @@ volatile unsigned char tick_timer=0;
 // Prototypes des fonctions locales
 void Sequenceur(void);
 void Init_Timer1(void);
+void Init_Ports(void);
 
 // Prototypes des fonctions externes 
 
@@ -61,15 +76,15 @@ int main ( void )
 {
  
  Init_EEPROM(); 
- lidar_registers_init();
- //Init_Ports();
+ //lidar_registers_init();
+ Init_Ports();
  //Init_Registers();
  Init_Timer1();
  //i2c1_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
  
 	while(1)
 	{
-        lidar_registers_management();
+        //lidar_registers_management();
         if (tick_timer) {
 			tick_timer = 0;
 			Sequenceur();
@@ -108,7 +123,8 @@ void Sequenceur(void)
   if (cpt50msec >= TEMPO_50msec) {
   	cpt50msec = 0;
 							
-  }
+    LATAbits.LATA4 = ~LATAbits.LATA4;
+}
 
   // ______________________________
   cpt100msec++;
@@ -135,6 +151,7 @@ void Sequenceur(void)
   if (cpt1sec >= TEMPO_1sec) {
   	cpt1sec = 0;
 
+
   }    
 }
 
@@ -144,6 +161,12 @@ void Sequenceur(void)
   Description:   Initialize Timer1
   Inputs:        None
   Returns:       None
+ F_FP = 23.03125 MHz
+ Tp = 1/F_FP
+ On veut 1 IRQ toutes les 10msec
+ Tirq = Tp* Prescaler * (PR1+1)
+ => PR1 = Tirq/(Tp*Prescaler) - 1
+ Avec Prescaler=64 => PR1 = 3598
 -----------------------------------------------------------------------*/
 void Init_Timer1(void)
 {
@@ -151,9 +174,9 @@ void Init_Timer1(void)
  	IFS0bits.T1IF = 0;				/* reset Timer 1 interrupt flag */
 	IPC0bits.T1IP = 4;				/* set Timer1 interrupt priority level to 4 */
  	IEC0bits.T1IE = 1;				/* enable Timer 1 interrupt */
-	PR1 = TIMER_PERIOD;				/* set Timer 1 period register */
-	T1CONbits.TCKPS = 2;			/* select Timer1 Input Clock Prescale */
-	T1CONbits.TCS = 0;			 	/* select external timer clock */
+	PR1 = 3598;                     /* set Timer 1 period register */
+	T1CONbits.TCKPS = 2;			/* Prescaler = 64 */
+	T1CONbits.TCS = 0;			 	/* select internal timer clock */
 	T1CONbits.TON = 1;			 	/* enable Timer 1 and start the count */ 
 }
 
@@ -167,7 +190,7 @@ void Init_Timer1(void)
 void __attribute__((interrupt, auto_psv)) _T1Interrupt( void )
 {
 	tick_timer = 1;				/* flag */
- 	IFS0bits.T1IF = 0;				/* reset timer interrupt flag	*/
+ 	IFS0bits.T1IF = 0;			/* reset timer interrupt flag	*/
 }	
 	
 
@@ -178,39 +201,7 @@ void Init_Ports(void)
     LATA  = 0x0000;             // set latch levels
     TRISA = 0xFFFF;             // set IO as inputs
     // Configuration de la LED sur la carte MICTOSTICK
-    TRISAbits.TRISA4 = 0;       // set IO as outputs
-
-    // STOR1
-    LATBbits.LATB6  = 0;       // set latch levels
-    TRISBbits.TRISB6 = 0;      // set IO as outputs
-
-    // STOR2
-    LATBbits.LATB7  = 0;       // set latch levels
-    TRISBbits.TRISB7 = 0;      // set IO as outputs
-
-    // STOR3
-    LATBbits.LATB10  = 0;       // set latch levels
-    TRISBbits.TRISB10 = 0;      // set IO as outputs
-
-    // STOR4
-    LATBbits.LATB11  = 0;       // set latch levels
-    TRISBbits.TRISB11 = 0;      // set IO as outputs
-
-    // STOR5
-    LATBbits.LATB12  = 0;       // set latch levels
-    TRISBbits.TRISB12 = 0;      // set IO as outputs
-
-    // STOR6
-    LATBbits.LATB13  = 0;       // set latch levels
-    TRISBbits.TRISB13 = 0;      // set IO as outputs
-
-    // STOR7
-    LATBbits.LATB14  = 0;       // set latch levels
-    TRISBbits.TRISB14 = 0;      // set IO as outputs
-
-    // STOR8
-    LATBbits.LATB15  = 0;       // set latch levels
-    TRISBbits.TRISB15 = 0;      // set IO as outputs
+    TRISAbits.TRISA4 = 0;       // Sortie : LED d'activité du SW
 }
 
 
