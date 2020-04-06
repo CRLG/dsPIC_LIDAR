@@ -20,9 +20,7 @@
 
 // FOSC
 #pragma config POSCMD   = NONE      // Primary Oscillator Mode Select bits (Primary Oscillator disabled)
-#pragma config OSCIOFNC = OFF       // OSC2 Pin Function bit (OSC2 is clock output)
-// Pour gagner une pin GPIO sur la sortie OSC2, changer la config en :
-//#pragma config OSCIOFNC = ON       // OSC2 Pin Function bit (OSC2 is general purpose digital I/O pin)
+#pragma config OSCIOFNC = ON       // OSC2 Pin Function bit (OSC2 is general purpose digital I/O pin)
 #pragma config IOL1WAY  = ON        // Peripheral pin select configuration (Allow only one reconfiguration)
 #pragma config FCKSM    = CSDCMD    // Clock Switching Mode bits (Both Clock switching and Fail-safe Clock Monitor are disabled)
 
