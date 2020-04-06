@@ -12,7 +12,7 @@
 
 // FWDT
 #pragma config WDTWIN   = WIN25     // Watchdog Window Select bits (WDT Window is 25% of WDT period)
-#pragma config WDTPOST  = PS32768   // Watchdog Timer Postscaler bits (1:32,768)
+#pragma config WDTPOST  = PS256   // Watchdog Timer Postscaler bits (1:256)
 #pragma config WDTPRE   = PR128     // Watchdog Timer Prescaler bit (1:128)
 #pragma config PLLKEN   = ON        // PLL Lock Enable bit (Clock switch to PLL source will wait until the PLL lock signal is valid.)
 #pragma config WINDIS   = OFF       // Watchdog Timer Window Enable bit (Watchdog Timer in Non-Window mode)
@@ -49,6 +49,14 @@
 #define F_FCY       (F_OSC/2)   // Fréquence pour l'exécution des instructions
 #define F_FP        F_CYCLE     // Fréquence de base pour les périphériques
 
+// Watchdog : voir note d'application Microchip DS70615C
+// Treset_watchdog = 1/Frc * N1 *N2   => Période du watchdog avant reset
+//      Avec Frc = Fréquence l'oscillateur interne = 32kHz
+//      N1 = 32 (WDTPRE=config 5 bits) ou 128 (WDTPRE = config 7 bits))
+//      N2 = WDTPOST 
+//      On choisit un période watchdog à 1sec environ
+//      => WDTPRE = 128 et WDTPOST = 256
+//      => Treset_watchdog = (1/32e3) * 128 * 256 = 1.024sec
 
 #include <xc.h>
 #include <libpic30.h>
@@ -66,6 +74,8 @@ volatile unsigned char tick_timer=0;
 void Sequenceur(void);
 void Init_Timer1(void);
 void Init_Ports(void);
+void Init_Watchdog();
+void Refresh_Watchdog();
 
 // Prototypes des fonctions externes 
 
@@ -81,6 +91,8 @@ int main ( void )
  //Init_Registers();
  Init_Timer1();
  //i2c1_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
+ 
+ Init_Watchdog();
  
 	while(1)
 	{
@@ -113,15 +125,15 @@ void Sequenceur(void)
   // ______________________________
   cpt20msec++;
   if (cpt20msec >= TEMPO_20msec) {
-  	cpt20msec = 0;
-
+    cpt20msec = 0;
+    Refresh_Watchdog();
   }
 
 
   // ______________________________
   cpt50msec++;
   if (cpt50msec >= TEMPO_50msec) {
-  	cpt50msec = 0;
+    cpt50msec = 0;
 							
     LATAbits.LATA4 = ~LATAbits.LATA4;
 }
@@ -129,28 +141,27 @@ void Sequenceur(void)
   // ______________________________
   cpt100msec++;
   if (cpt100msec >= TEMPO_100msec) {
-  	cpt100msec = 0;
+    cpt100msec = 0;
 
   }
 
   // ______________________________
   cpt200msec++;
   if (cpt200msec >= TEMPO_200msec) {
-  	cpt200msec = 0;
+    cpt200msec = 0;
 
   }
   // ______________________________
   cpt500msec++;
   if (cpt500msec >= TEMPO_500msec) {
-  	cpt500msec = 0;
+    cpt500msec = 0;
 
   }
 
   // ______________________________
   cpt1sec++;
   if (cpt1sec >= TEMPO_1sec) {
-  	cpt1sec = 0;
-
+    cpt1sec = 0;
 
   }    
 }
@@ -205,5 +216,16 @@ void Init_Ports(void)
 }
 
 
+// ============================================================
+//                          WATCHDOG
+// ============================================================
+void Init_Watchdog()
+{
+   RCONbits.SWDTEN = 1; 
+}
+void Refresh_Watchdog()
+{
+   ClrWdt();    
+}
 
 
