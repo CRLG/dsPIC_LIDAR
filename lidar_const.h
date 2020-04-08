@@ -13,14 +13,14 @@ typedef enum {
    TELEM_AUTOTEST_ERROR
 }T_TELEMETER_STATUS;
 
+#define INFINITE_DISTANCE   (0xFF)
+
 typedef enum {
     // ============================================
     // Read Only registers
     // ============================================
     REG_VERSION_SOFT_MAJ = 0,
     REG_VERSION_SOFT_MIN,
-    REG_PTR_REG_LECTURE_I2C,
-    REG_NBRE_REGISTRES_LECTURE_I2C,
     // Status général 
     REG_SYSTEM_STATUS,                  // voir enum T_SYSTEM_STATUS
     // Status pour chaque télémètre
@@ -56,6 +56,9 @@ typedef enum {
             // ============================================
     // Read write registers
     // ============================================
+    // Pour les échanges optimisés/sécurisés (avec checksum) lors des requêtes de lecture
+    REG_PTR_REG_LECTURE_I2C,            // Indique quel registre sera renvoyé en 1er lors de la prochaine requête de lecture
+    REG_NBRE_REGISTRES_LECTURE_I2C,     // Indique le nombre de registres qui vont être demandés par le master lors de la prochaine requête de lecture
     //  AUTORISATION OU NON DE FONCTIONNER POUR CHAQUE TELEMETRE
     REG_ENABLE_TELEMETER_1,   // Télémètre par télémètre
     REG_ENABLE_TELEMETER_2,
