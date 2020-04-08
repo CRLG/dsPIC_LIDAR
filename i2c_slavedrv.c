@@ -56,7 +56,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 uint8_t         ucRAMBuffer[SIZE_RAM_BUFFER]; //RAM area which will work as EEPROM for Master I2C device
 uint8_t         *ramPtr;        //Pointer to RAM memory locations
 unsigned short cptPerteComMaster=0;
-struct FlagType flag;
+//struct FlagType flag;
 
 // Prototype des fonctions locales
 void PrepareBufferToSend(void);
@@ -93,8 +93,6 @@ void i2c1_init(unsigned char i2c_addr)
 	I2C1ADD = i2c_addr>>1; // 7-bit I2C slave address must be initialised in register.
 	
 	IFS1=0;
-	flag.AddrFlag = 0;	//Initlize AddFlag
-	flag.DataFlag = 0;	//Initlize DataFlag
 	_SI2C1IE = 1;
 }
 
@@ -117,7 +115,6 @@ void __attribute__((interrupt,no_auto_psv)) _SI2C1Interrupt(void)
 {
 	unsigned char Temp;	//used for dummy read
     static unsigned int indexRAM=0;
-    
     // Requête d'écriture: juste après l'adresse I2C reconnue
 	if((I2C1STATbits.R_W == 0)&&(I2C1STATbits.D_A == 0))	//Address matched
 	{
@@ -150,53 +147,6 @@ void __attribute__((interrupt,no_auto_psv)) _SI2C1Interrupt(void)
 	}
 	_SI2C1IF = 0;	//clear I2C1 Slave interrupt flag
 }	
-// OLD
-/*
-void __attribute__ ( (interrupt, no_auto_psv) ) _SI2C1Interrupt( void )
-{
-    unsigned char   temp;   //used for dummy read
-    if( (I2C1STATbits.R_W == 0) && (I2C1STATbits.D_A == 0) )    //Address matched
-    {
-        temp = I2C1RCV;     //dummy read
-        flag.AddrFlag = 1;  //next byte will be address
-    }
-    else if( (I2C1STATbits.R_W == 0) && (I2C1STATbits.D_A == 1) )   //check for data
-    {
-        if( flag.AddrFlag )
-        {
-            flag.AddrFlag = 0;
-            flag.DataFlag = 1;                      //next byte is data
-            ramPtr = ramPtr + I2C1RCV;
-
-            #if defined( USE_I2C_Clock_Stretch )
-            I2C1CONbits.SCLREL = 1;                 //Release SCL1 line
-            #endif
-        }
-        else if( flag.DataFlag )
-        {
-            *ramPtr = ( unsigned char ) I2C1RCV;    // store data into RAM
-            flag.AddrFlag = 0;                      //end of tx
-            flag.DataFlag = 0;
-            ramPtr = &ramBuffer[0];                 //reset the RAM pointer
-            #if defined( USE_I2C_Clock_Stretch )
-            I2C1CONbits.SCLREL = 1;                 //Release SCL1 line
-            #endif
-        }
-    }
-    else if( (I2C1STATbits.R_W == 1) && (I2C1STATbits.D_A == 0) )
-    {
-        temp = I2C1RCV;
-        I2C1TRN = *ramPtr;      //Read data from RAM & send data to I2C master device
-        I2C1CONbits.SCLREL = 1; //Release SCL1 line
-        while( I2C1STATbits.TBF );
-
-        //Wait till all
-        ramPtr = &ramBuffer[0]; //reset the RAM pointer
-    }
-
-    _SI2C1IF = 0;               //clear I2C1 Slave interrupt flag
-}
-*/
 
 // ________________________________________________________
 // Fonction appelée sur une requête de lecture
@@ -221,7 +171,8 @@ void PrepareBufferToSend(void)
     indexBuffer++;
     indexRegistre++;
  }
- ucRAMBuffer[indexBuffer] = checksum; // Le dernier octet à transférer est le checksum      
+ ucRAMBuffer[indexBuffer] = checksum; // Le dernier octet à transférer est le checksum 
+ LATAbits.LATA4 = ~LATAbits.LATA4;
 }  
 
 // ____________________________________________________________  
@@ -269,7 +220,7 @@ void GestionReceptionI2C(unsigned char first, unsigned char data)
       checksum += data;
     break;   
    // _________________________________
-    case RX_VALEURS_REGISTRES : 
+    case RX_VALEURS_REGISTRES : // TODO : y'a un truc à revoir sur la position du nbre_octets_recus++; pour optimiser les opérations réalisées
       ucRAMBuffer[nbre_octets_recus + 1] = data;
       nbre_octets_recus++;
       checksum += data;  
@@ -307,11 +258,11 @@ void FinReceptionTrameValideI2C(void)
  unsigned short i=0;
  unsigned char indexReg;
  
- indexReg = ucRAMBuffer[1];
  for (i=0; i<(ucRAMBuffer[0]-2); i++) { // -2 car il faut supprimer le checksum et le numéro de registre
-    if (dsPIC_reg[indexReg+i].type_read_write == READ_WRITE) {
-       dsPIC_reg[indexReg+i].val = ucRAMBuffer[i+2];
-       dsPIC_reg[indexReg+i].new_data = 1; // indique à la tâche de fond que le registe a été modifié     
+    indexReg = ucRAMBuffer[1] + i;
+    if (dsPIC_reg[indexReg].type_read_write == READ_WRITE) {
+       dsPIC_reg[indexReg].val = ucRAMBuffer[i+2];
+       dsPIC_reg[indexReg].new_data = 1; // indique à la tâche de fond que le registe a été modifié     
     }
     // else : le registre est read only, pas d'écriture     
  }
