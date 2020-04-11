@@ -43,9 +43,7 @@
 //        => Fosc = 7.37 * (50/(2*4)) = 46.0625MHz
 //      - Fcy = (Fosc / 2) = 23.03125 MHz (Tcy = 43.41nsec) -> Fréquence pour les instructions CPU
 //      - Fp = Fcy                                          -> Fréquence de base pour les prériphériques (Timer, I2C, UART, ...)
-#define F_FOSC       46062500   // [MHz]
-#define F_FCY       (F_OSC/2)   // Fréquence pour l'exécution des instructions
-#define F_FP        F_CYCLE     // Fréquence de base pour les périphériques
+
 
 // Watchdog : voir note d'application Microchip DS70615C
 // Treset_watchdog = 1/Frc * N1 *N2   => Période du watchdog avant reset
@@ -68,6 +66,8 @@
 // Variables globales
 volatile unsigned char tick_timer=0;
 
+// Variables globales externes
+extern unsigned short cptPerteComMaster;
 
 // Prototypes des fonctions locales
 void Sequenceur(void);

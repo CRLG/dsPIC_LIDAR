@@ -5,6 +5,10 @@
 #define VERSION_SOFT_MAJ    (1)
 #define VERSION_SOFT_MIN    (0)
 
+#define F_FOSC       46062500       // [MHz]
+#define F_FCY       (F_FOSC/2)      // Fréquence pour l'exécution des instructions
+#define F_FP        F_CYCLE         // Fréquence de base pour les périphériques
+
 #define I2C_SLAVE_DEFAULT_ADDRESS_8bits (0x50)  // A terme, mettre une adresse par défaut qui n'est pas une de celle déjà utilisée par les autres dsPIC 
 
 #define ENTER_CRITICAL_SECTION_I2C() { _SI2C1IE = 0; }
@@ -23,8 +27,6 @@
 #define TEMPO_5sec      (5000/PERIODE_TICK)
 #define TEMPO_10sec     (10000/PERIODE_TICK)
 #define TEMPO_15sec     (15000/PERIODE_TICK)
-
-extern unsigned short cptPerteComMaster;
 
 #endif
 // End
