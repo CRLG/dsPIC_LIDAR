@@ -26,6 +26,32 @@
       <itemPath>../traps.c</itemPath>
       <itemPath>../lidar_registers.c</itemPath>
     </logicalFolder>
+    <logicalFolder name="f1" displayName="VL53L0X_1_0_2" projectFiles="true">
+      <logicalFolder name="f1" displayName="Header Files" projectFiles="true">
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_calibration.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_core.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_ranging.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_strings.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_def.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_device.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_interrupt_threshold_settings.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_tuning.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_types.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_i2c_platform.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_platform.h</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_platform_log.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f2" displayName="Source Files" projectFiles="true">
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api.c</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_calibration.c</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_core.c</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_ranging.c</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_api_strings.c</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_platform.c</itemPath>
+        <itemPath>../VL53L0X_1_0_2/vl53l0x_platform_log.c</itemPath>
+      </logicalFolder>
+    </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false">
