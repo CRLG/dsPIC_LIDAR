@@ -5,8 +5,7 @@
 #define VERSION_SOFT_MAJ    (1)
 #define VERSION_SOFT_MIN    (0)
 
-#define I2C_DEFAULT_ADDRESS_8bits (0x64)
-void i2c1_init(unsigned char i2c_addr);
+#define I2C_SLAVE_DEFAULT_ADDRESS_8bits (0x50)  // A terme, mettre une adresse par défaut qui n'est pas une de celle déjà utilisée par les autres dsPIC 
 
 #define ENTER_CRITICAL_SECTION_I2C() { _SI2C1IE = 0; }
 #define LEAVE_CRITICAL_SECTION_I2C() { _SI2C1IE = 1; }

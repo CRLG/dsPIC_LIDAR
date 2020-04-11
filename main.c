@@ -60,6 +60,7 @@
 #include <libpic30.h>
 #include "eeprom.h"
 #include "lidar_registers.h"
+#include "i2c_slavedrv.h"
 #include "General.h"
 
 // Constates
@@ -84,11 +85,11 @@ int main ( void )
 {
  
  Init_EEPROM(); 
- //lidar_registers_init();
  Init_Ports();
+ lidar_registers_init();
  //Init_Registers();
  Init_Timer1();
- //i2c1_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
+ i2c1_slave_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
  
  Init_Watchdog();
  
@@ -133,7 +134,7 @@ void Sequenceur(void)
   if (cpt50msec >= TEMPO_50msec) {
     cpt50msec = 0;
 							
-    LATAbits.LATA4 = ~LATAbits.LATA4;
+    //LATAbits.LATA4 = ~LATAbits.LATA4;
 }
 
   // ______________________________
@@ -160,8 +161,7 @@ void Sequenceur(void)
   cpt1sec++;
   if (cpt1sec >= TEMPO_1sec) {
     cpt1sec = 0;
-
-  }    
+  }
 }
 
 
@@ -210,6 +210,7 @@ void Init_Ports(void)
     LATA  = 0x0000;             // set latch levels
     TRISA = 0xFFFF;             // set IO as inputs
     // Configuration de la LED sur la carte MICTOSTICK
+    TRISAbits.TRISA3 = 0;       // Sortie
     TRISAbits.TRISA4 = 0;       // Sortie : LED d'activité du SW
 }
 

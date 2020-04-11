@@ -10,7 +10,7 @@ static unsigned char EEPROM_write_enable = 0;
 void forceEEPROMDefaultValues()
 {
  EEPROM_values[EEPADDR_MAGIC_NUMBER]                    = EEPROM_MAGIC_NUMBER;
- EEPROM_values[EEPADDR_I2C_ADDRESS_8bits]               = I2C_DEFAULT_ADDRESS_8bits;
+ EEPROM_values[EEPADDR_I2C_ADDRESS_8bits]               = I2C_SLAVE_DEFAULT_ADDRESS_8bits;
  EEPROM_values[EEPADDR_ENABLED_TELEMETER_BITFIELD]      = 0xFFFF;  // Tous les télémètres actifs
  EEPROM_values[EEPADDR_THRESHOLD_ALERT_TELEMETER_1]     = INFINITE_DISTANCE;
  EEPROM_values[EEPADDR_THRESHOLD_ALERT_TELEMETER_2]     = INFINITE_DISTANCE;

@@ -1,87 +1,26 @@
-/*******************************************************************************
-  I2C funtions
-  
-  Company:
-    Microchip Technology Inc.
-
-  File Name:
-  i2c_slavedrv.c
-
-  Summary:
-    This file is used to configure I2C.
-
-  Description:
-    This code example shows how to use I2C module in slave mode.
- The master I2C device uses the slave I2C device as RAM.
- Thus master I2C device can read/write particular RAM area of I2C slave device.
-*******************************************************************************/
-/*******************************************************************************
-Copyright (c) 2012 released Microchip Technology Inc.  All rights reserved.
-
-Microchip licenses to you the right to use, modify, copy and distribute
-Software only when embedded on a Microchip microcontroller or digital signal
-controller that is integrated into your product or third party product
-(pursuant to the sublicense terms in the accompanying license agreement).
-
-You should refer to the license agreement accompanying this Software for
-additional information regarding your rights and obligations.
-
-SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
-EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF
-MERCHANTABILITY, TITLE, NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE.
-IN NO EVENT SHALL MICROCHIP OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER
-CONTRACT, NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR
-OTHER LEGAL EQUITABLE THEORY ANY DIRECT OR INDIRECT DAMAGES OR EXPENSES
-INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE OR
-CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT OF
-SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
-(INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
-*******************************************************************************/
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files
-// *****************************************************************************
-// *****************************************************************************
 #include <xc.h>
 #include <stdint.h>
 #include "i2c_slavedrv.h"
 #include "lidar_registers.h"
 
 /*****************************************************************************
-// *****************************************************************************
 // Section: File Scope or Global Constants
-// *****************************************************************************
 // *****************************************************************************/
 #define SIZE_RAM_BUFFER 200
-uint8_t         ucRAMBuffer[SIZE_RAM_BUFFER]; //RAM area which will work as EEPROM for Master I2C device
-uint8_t         *ramPtr;        //Pointer to RAM memory locations
+static uint8_t ucRAMBuffer[SIZE_RAM_BUFFER]; //RAM area which will work as EEPROM for Master I2C device
 unsigned short cptPerteComMaster=0;
-//struct FlagType flag;
 
 // Prototype des fonctions locales
-void PrepareBufferToSend(void);
-void GestionReceptionI2C(unsigned char first, unsigned char data);
-void FinReceptionTrameValideI2C(void);
+static void PrepareBufferToSend(void);
+static void GestionReceptionI2C(unsigned char first, unsigned char data);
+static void FinReceptionTrameValideI2C(void);
 
-// *****************************************************************************
-// Section: Function definition
-// *****************************************************************************
-// *****************************************************************************
 
 /******************************************************************************
- * Function:       void I2C1_Init(void)
- *
- * PreCondition:    None
- *
- * Input:           None
- *
- * Output:          None
- *
- * Side Effects:    None
- *
  * Overview:        Initializes I2C1 peripheral.
+ * i2c_addr : 7 bit address
  *****************************************************************************/
-void i2c1_init(unsigned char i2c_addr)
+void i2c1_slave_init(unsigned char i2c_addr)
 {
 	#if !defined(USE_I2C_Clock_Stretch)
 		I2C1CON = 0x8000;	//Enable I2C1 module
@@ -99,16 +38,6 @@ void i2c1_init(unsigned char i2c_addr)
 
 
 /******************************************************************************
- * Function:   void __attribute__((interrupt,no_auto_psv)) _SI2C1Interrupt(void)
- *
- * PreCondition:    None
- *
- * Input:           None
- *
- * Output:          None
- *
- * Side Effects:    None
- *
  * Overview:        This is the ISR for I2C1 Slave interrupt.
  *****************************************************************************/
 void __attribute__((interrupt,no_auto_psv)) _SI2C1Interrupt(void)
@@ -155,7 +84,7 @@ void __attribute__((interrupt,no_auto_psv)) _SI2C1Interrupt(void)
 // ucRAMBuffer est le buffer
 // Certaines valeurs comme les entrés analogiques sont déjà renseignée dans dsPIC_reg[] par la tache de fond
 //  
-void PrepareBufferToSend(void)
+static void PrepareBufferToSend(void)
 {
  unsigned short i=0;  
  unsigned char checksum=0; 
@@ -185,7 +114,7 @@ typedef enum {
 }T_ETAT_RX_I2C;   
 
 // _______________________________________________________________
-void GestionReceptionI2C(unsigned char first, unsigned char data)
+static void GestionReceptionI2C(unsigned char first, unsigned char data)
 {
   static unsigned char etat = RX_NOMBRE_OCTETS_TRANSFERES;
   static unsigned char checksum  = 0;
@@ -253,7 +182,7 @@ void GestionReceptionI2C(unsigned char first, unsigned char data)
 //  - ucRAMBuffer[1] contient l'adresse du premier registre reg affecté par l'écriture
 //  - ucRAMBuffer[2] contient la valeur du registre reg
 //  - ucRAMBuffer[3] contient la valeur du registre reg+1
-void FinReceptionTrameValideI2C(void)
+static void FinReceptionTrameValideI2C(void)
 {
  unsigned short i=0;
  unsigned char indexReg;
@@ -269,6 +198,3 @@ void FinReceptionTrameValideI2C(void)
 }   
 
 
-/*******************************************************************************
- End of File
-*/
