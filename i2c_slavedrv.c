@@ -20,7 +20,7 @@ static void FinReceptionTrameValideI2C(void);
  * Overview:        Initializes I2C1 peripheral.
  * i2c_addr : 7 bit address
  *****************************************************************************/
-void i2c1_slave_init(unsigned char i2c_addr)
+void i2c_slave_init(unsigned char i2c_addr)
 {
 	#if !defined(USE_I2C_Clock_Stretch)
 		I2C1CON = 0x8000;	//Enable I2C1 module
