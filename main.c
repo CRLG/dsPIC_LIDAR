@@ -8,7 +8,7 @@
 
 // FPOR
 #pragma config ALTI2C1  = ON        // Alternate I2C1 pins (I2C1 mapped to ASDA1/ASCL1 pins)    
-#pragma config ALTI2C2  = OFF       // Alternate I2C2 pins (I2C2 mapped to SDA2/SCL2 pins)
+#pragma config ALTI2C2  = ON        // Alternate I2C2 pins (I2C2 mapped to ASDA2/ASCL2 pins)
 
 // FWDT
 #pragma config WDTWIN   = WIN25     // Watchdog Window Select bits (WDT Window is 25% of WDT period)
@@ -59,6 +59,7 @@
 #include "eeprom.h"
 #include "lidar_registers.h"
 #include "i2c_slavedrv.h"
+#include "i2c_masterdrv.h"
 #include "General.h"
 
 // Constates
@@ -76,22 +77,19 @@ void Init_Ports(void);
 void Init_Watchdog();
 void Refresh_Watchdog();
 
-// Prototypes des fonctions externes 
-
 
 // ____________________________________
 //	main entry point
 int main ( void )
 {
- 
- Init_EEPROM(); 
- Init_Ports();
- lidar_registers_init();
- //Init_Registers();
- Init_Timer1();
- i2c1_slave_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
- 
- Init_Watchdog();
+    // Hardware init
+    Init_EEPROM(); 
+    Init_Ports();
+    lidar_registers_init();
+    i2c_slave_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
+    i2c_master_init();
+    Init_Timer1();
+    Init_Watchdog();
  
 	while(1)
 	{
@@ -113,7 +111,9 @@ void Sequenceur(void)
   static unsigned int cpt200msec = 0;
   static unsigned int cpt500msec = 0;
   static unsigned int cpt1sec = 0;
-
+  unsigned char data[10] = { 3, 12, 1, 16};
+  static unsigned char cptErrorCom = 0;
+ 
   // ______________________________
   cpt10msec++;
   if (cpt10msec >= TEMPO_10msec) {
@@ -133,9 +133,18 @@ void Sequenceur(void)
   cpt50msec++;
   if (cpt50msec >= TEMPO_50msec) {
     cpt50msec = 0;
-							
-    //LATAbits.LATA4 = ~LATAbits.LATA4;
-}
+
+    if (i2c_master_read(0x54, data, 5) == I2CM_OK) {
+        //LATAbits.LATA4 = 1;
+    }
+    else {
+        if (cptErrorCom < 0xFF) cptErrorCom++;
+    }
+    LATAbits.LATA4 = cptErrorCom >= 1;
+
+   i2c_master_write(0x54, data, 5);
+    
+ }
 
   // ______________________________
   cpt100msec++;
@@ -161,6 +170,19 @@ void Sequenceur(void)
   cpt1sec++;
   if (cpt1sec >= TEMPO_1sec) {
     cpt1sec = 0;
+/*
+    int i;
+    for (i=0; i<0x60; i+=2) {
+        int present = i2c_master_ping(i);
+        if (present == 1) {
+            LATAbits.LATA4 = 1;
+        }
+        else {
+            LATAbits.LATA4 = 1;
+        }
+              
+    }
+ */   
   }
 }
 
