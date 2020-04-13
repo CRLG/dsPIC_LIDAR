@@ -10,6 +10,7 @@
 #define F_FP        F_CYCLE         // Fréquence de base pour les périphériques
 
 #define I2C_SLAVE_DEFAULT_ADDRESS_8bits (0x50)  // A terme, mettre une adresse par défaut qui n'est pas une de celle déjà utilisée par les autres dsPIC 
+#define I2C_MCP23017_I2C_ADDRESS        (0x48)
 
 #define ENTER_CRITICAL_SECTION_I2C() { _SI2C1IE = 0; }
 #define LEAVE_CRITICAL_SECTION_I2C() { _SI2C1IE = 1; }

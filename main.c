@@ -60,6 +60,7 @@
 #include "lidar_registers.h"
 #include "i2c_slavedrv.h"
 #include "i2c_masterdrv.h"
+#include "mcp23017.h"
 #include "General.h"
 
 // Constates
@@ -88,6 +89,8 @@ int main ( void )
     lidar_registers_init();
     i2c_slave_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
     i2c_master_init();
+    mcp23017_init(I2C_MCP23017_I2C_ADDRESS);
+    mcp23017_configDirections(0, 0);
     Init_Timer1();
     Init_Watchdog();
  
@@ -134,17 +137,7 @@ void Sequenceur(void)
   if (cpt50msec >= TEMPO_50msec) {
     cpt50msec = 0;
 
-    if (i2c_master_read(0x54, data, 5) == I2CM_OK) {
-        //LATAbits.LATA4 = 1;
-    }
-    else {
-        if (cptErrorCom < 0xFF) cptErrorCom++;
-    }
-    LATAbits.LATA4 = cptErrorCom >= 1;
-
-   i2c_master_write(0x54, data, 5);
-    
- }
+}
 
   // ______________________________
   cpt100msec++;
@@ -172,7 +165,7 @@ void Sequenceur(void)
     cpt1sec = 0;
 /*
     int i;
-    for (i=0; i<0x60; i+=2) {
+    for (i=0; i<0x80; i+=2) {
         int present = i2c_master_ping(i);
         if (present == 1) {
             LATAbits.LATA4 = 1;
@@ -182,7 +175,7 @@ void Sequenceur(void)
         }
               
     }
- */   
+*/    
   }
 }
 
