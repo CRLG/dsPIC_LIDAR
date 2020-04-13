@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vl53l0x_platform.h"
 #include "vl53l0x_i2c_platform.h"
 #include "vl53l0x_api.h"
+#include "../i2c_masterdrv.h"
 
 #define LOG_FUNCTION_START(fmt, ... )           _LOG_FUNCTION_START(TRACE_MODULE_PLATFORM, fmt, ##__VA_ARGS__)
 #define LOG_FUNCTION_END(status, ... )          _LOG_FUNCTION_END(TRACE_MODULE_PLATFORM, status, ##__VA_ARGS__)
@@ -152,8 +153,7 @@ VL53L0X_Error VL53L0X_WrByte(VL53L0X_DEV Dev, uint8_t index, uint8_t data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-	//FONCTION D'ECRITURE I2C
-    //status_int = VL53L0X_write_byte(deviceAddress, index, data);
+    //status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
 
 	if (status_int != 0)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -168,8 +168,7 @@ VL53L0X_Error VL53L0X_WrWord(VL53L0X_DEV Dev, uint8_t index, uint16_t data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-	//FONCTION D'ECRITURE I2C
-    //status_int = VL53L0X_write_word(deviceAddress, index, data);
+    //status_int = i2c_master_write_register(deviceAddress, index, &data, 2);
 
 	if (status_int != 0)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -184,8 +183,7 @@ VL53L0X_Error VL53L0X_WrDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-	//FONCTION D'ECRITURE I2C
-    //status_int = VL53L0X_write_dword(deviceAddress, index, data);
+    //status_int = i2c_master_write_register(deviceAddress, index, &data, 4);
 
 	if (status_int != 0)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -201,16 +199,14 @@ VL53L0X_Error VL53L0X_UpdateByte(VL53L0X_DEV Dev, uint8_t index, uint8_t AndData
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //FONCTION DE LECTURE I2C
-    //status_int = VL53L0X_read_byte(deviceAddress, index, &data);
+    //status_int = i2c_master_read_register(deviceAddress, index, &data, 1);
 
     if (status_int != 0)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     if (Status == VL53L0X_ERROR_NONE) {
         data = (data & AndData) | OrData;
-        //FONCTION D'ECRITURE I2C
-        //status_int = VL53L0X_write_byte(deviceAddress, index, data);
+        //status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
 
         if (status_int != 0)
             Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -226,8 +222,7 @@ VL53L0X_Error VL53L0X_RdByte(VL53L0X_DEV Dev, uint8_t index, uint8_t *data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //FONCTION DE LECTURE I2C
-    //status_int = VL53L0X_read_byte(deviceAddress, index, data);
+    //status_int = i2c_master_read_register(deviceAddress, index, &data, 1);
 
     if (status_int != 0)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -242,8 +237,7 @@ VL53L0X_Error VL53L0X_RdWord(VL53L0X_DEV Dev, uint8_t index, uint16_t *data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //FONCTION DE LECTURE I2C
-    //status_int = VL53L0X_read_word(deviceAddress, index, data);
+    //status_int = i2c_master_read_register(deviceAddress, index, &data, 2);
 
     if (status_int != 0)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -258,8 +252,7 @@ VL53L0X_Error  VL53L0X_RdDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t *data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //FONCTION DE LECTURE I2C
-    //status_int = VL53L0X_read_dword(deviceAddress, index, data);
+    //status_int = i2c_master_read_register(deviceAddress, index, &data, 4);
 
     if (status_int != 0)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
