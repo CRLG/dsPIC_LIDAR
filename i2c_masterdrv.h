@@ -11,7 +11,9 @@ typedef enum {
 
 void i2c_master_init(void);
 tI2CMasterError i2c_master_write(char address, unsigned char *data, unsigned char len);
+tI2CMasterError i2c_master_write_register(char address, unsigned char reg, unsigned char *data, unsigned char len);
 tI2CMasterError i2c_master_read(char address, unsigned char *data, unsigned char len);
+tI2CMasterError i2c_master_read_register(char address, unsigned char reg, unsigned char *data, unsigned char len);
 int i2c_master_ping(char address);
 
 #endif  // _I2C_MASTER_DRIVER_H_

@@ -156,10 +156,55 @@ i2c_master_write_end :
 }
 
 /*********************************************************************
+* Overview:		Complete write sequence
+* Input : 
+*   address : 7 bits slave destination address
+*   reg : register address 
+*   data : buffer of data bytes
+*   len : number of bytes to write from the buffer to I2C
+* Return : 
+*    0 : OK
+*   -1 : an arror occurs during transmission
+********************************************************************/
+tI2CMasterError i2c_master_write_register(char address, unsigned char reg, unsigned char *data, unsigned char len)
+{
+    tI2CMasterError error_code = I2CM_OK;
+
+    IdleI2C();                  //Ensure Module is Idle
+	StartI2C();                 //Generate Start COndition
+	WriteI2C(address);          //Write Control byte
+	IdleI2C();
+    if (ACKStatus() == SLAVE_ACK_NOK) {
+        error_code = I2CM_SLAVE_NACK_TRANSMISSION;
+        goto i2c_master_write_end;
+    }
+
+	WriteI2C(reg);          //Write reg address
+	IdleI2C();
+    if (ACKStatus() == SLAVE_ACK_NOK) {
+        error_code = I2CM_SLAVE_NACK_TRANSMISSION;
+        goto i2c_master_write_end;
+    }
+    
+    while (len--) {
+        WriteI2C(*data++);
+        IdleI2C();
+        if (ACKStatus() == SLAVE_ACK_NOK) {
+            error_code = I2CM_SLAVE_NACK_TRANSMISSION;
+            goto i2c_master_write_end;
+        }
+    }
+i2c_master_write_end :
+    IdleI2C();
+	StopI2C();
+    return error_code;
+}
+
+/*********************************************************************
 * Overview:		Complete read sequence
 * Input : 
 *   address : 7 bits slave destination address
-*   len : number of bytes to write from the buffer to I2C
+*   len : number of bytes to read from slave
 * Input/Output : 
 *   data : buffer of allocated data bytes
 * Return : 
@@ -191,6 +236,55 @@ i2c_master_read_end :
     return error_code;
 }
 
+/*********************************************************************
+* Overview:		read data from register index
+* Input : 
+*   address : 7 bits slave destination address
+*   reg : register address 
+*   len : number of bytes to read 
+* Input/Output : 
+*   data : buffer of allocated data bytes
+* Return : 
+*    0 : OK
+*   -1 : an arror occurs during transmission
+********************************************************************/
+tI2CMasterError i2c_master_read_register(char address, unsigned char reg, unsigned char *data, unsigned char len)
+{
+    tI2CMasterError error_code = I2CM_OK;
+     
+    IdleI2C();                  //Ensure Module is Idle
+	StartI2C();                 //Generate Start COndition
+	WriteI2C(address);          //Write Control byte
+	IdleI2C();
+    if (ACKStatus() == SLAVE_ACK_NOK) {
+        error_code = I2CM_SLAVE_NACK_TRANSMISSION;
+        goto i2c_master_read_end;
+    }
+
+  	WriteI2C(reg);              //Write reg address
+	IdleI2C();
+    if (ACKStatus() == SLAVE_ACK_NOK) {
+        error_code = I2CM_SLAVE_NACK_TRANSMISSION;
+        goto i2c_master_read_end;
+    }
+      
+	RestartI2C();                   //Generate Start Condition
+    WriteI2C(address | 0x01);       //Write control byte for read
+	IdleI2C();                      //wait for bus Idle
+    if (ACKStatus() == SLAVE_ACK_NOK) {
+        error_code = I2CM_SLAVE_NACK_TRANSMISSION;
+        goto i2c_master_read_end;
+    }   
+    while (len--) {
+        *data++ = getI2C();
+        if (len)    AckI2C();       // Send Ack
+        else        NotAckI2C();    // Send Not Ack for last byte
+    }
+
+i2c_master_read_end : 
+	StopI2C();                      //Generate Stop 
+    return error_code;
+}
 
 /*********************************************************************
 * Overview:		Ping a slave
