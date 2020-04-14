@@ -77,6 +77,7 @@ void Sequenceur(void);
 void Init_Timer1(void);
 void Init_Ports(void);
 void Init_Watchdog();
+void Init_IRQ_Priority();
 void Refresh_Watchdog();
 
 
@@ -87,6 +88,7 @@ int main ( void )
     // Hardware init
     Init_EEPROM(); 
     Init_Ports();
+    Init_IRQ_Priority();
     lidar_registers_init();
     i2c_slave_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
     i2c_master_init();
@@ -217,6 +219,14 @@ void Init_Ports(void)
     // Configuration de la LED sur la carte MICTOSTICK
     TRISAbits.TRISA3 = 0;       // Sortie
     TRISAbits.TRISA4 = 0;       // Sortie : LED d'activité du SW
+}
+
+// ___________________________________________________________
+void Init_IRQ_Priority()
+{
+    IPC0bits.T1IP       = 1;    // IRQ Timer1 (le plus prioritaire)
+    IPC4bits.SI2C1IP    = 2;    // IRQ I2C esclave
+    IPC2bits.U1RXIP     = 3;    // IRQ sur réception UART
 }
 
 // ============================================================
