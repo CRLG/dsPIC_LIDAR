@@ -11,6 +11,7 @@
       <itemPath>../lidar_const.h</itemPath>
       <itemPath>../lidar_registers.h</itemPath>
       <itemPath>../i2c_masterdrv.h</itemPath>
+      <itemPath>../uartdrv.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -31,6 +32,7 @@
       <itemPath>../traps.c</itemPath>
       <itemPath>../lidar_registers.c</itemPath>
       <itemPath>../i2c_masterdrv.c</itemPath>
+      <itemPath>../uartdrv.c</itemPath>
     </logicalFolder>
     <logicalFolder name="f1" displayName="VL53L0X_1_0_2" projectFiles="true">
       <logicalFolder name="f1" displayName="Header Files" projectFiles="true">

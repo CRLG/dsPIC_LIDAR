@@ -61,6 +61,7 @@
 #include "i2c_slavedrv.h"
 #include "i2c_masterdrv.h"
 #include "mcp23017.h"
+#include "uartdrv.h"
 #include "General.h"
 
 // Constates
@@ -91,6 +92,7 @@ int main ( void )
     i2c_master_init();
     mcp23017_init(I2C_MCP23017_I2C_ADDRESS);
     mcp23017_configDirections(0, 0);
+    uart_init();
     Init_Timer1();
     Init_Watchdog();
  
@@ -136,7 +138,7 @@ void Sequenceur(void)
   cpt50msec++;
   if (cpt50msec >= TEMPO_50msec) {
     cpt50msec = 0;
-
+ 
 }
 
   // ______________________________
@@ -163,19 +165,7 @@ void Sequenceur(void)
   cpt1sec++;
   if (cpt1sec >= TEMPO_1sec) {
     cpt1sec = 0;
-/*
-    int i;
-    for (i=0; i<0x80; i+=2) {
-        int present = i2c_master_ping(i);
-        if (present == 1) {
-            LATAbits.LATA4 = 1;
-        }
-        else {
-            LATAbits.LATA4 = 1;
-        }
-              
-    }
-*/    
+ 
   }
 }
 
@@ -229,7 +219,6 @@ void Init_Ports(void)
     TRISAbits.TRISA4 = 0;       // Sortie : LED d'activité du SW
 }
 
-
 // ============================================================
 //                          WATCHDOG
 // ============================================================
@@ -242,4 +231,12 @@ void Refresh_Watchdog()
    ClrWdt();    
 }
 
+// ___________________________________________________________
+// TODO : à mettre côté XBEE
+void uart_irq_rx_callback(unsigned char data)
+{
+    LATAbits.LATA4 = ~LATAbits.LATA4;
+    // pour les essais uniquement
+    //uart_send_byte(data);
+}
 
