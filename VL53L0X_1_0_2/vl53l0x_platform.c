@@ -139,7 +139,7 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     //FONCTION DE LECTURE I2C
 	//status_int = VL53L0X_read_multi(deviceAddress, index, pdata, count);
 
-	if (status_int != 0)
+	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -153,9 +153,9 @@ VL53L0X_Error VL53L0X_WrByte(VL53L0X_DEV Dev, uint8_t index, uint8_t data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
+    status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
 
-	if (status_int != 0)
+	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -165,12 +165,17 @@ VL53L0X_Error VL53L0X_WrWord(VL53L0X_DEV Dev, uint8_t index, uint16_t data){
     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
     int32_t status_int=VL53L0X_ERROR_UNDEFINED;
 	uint8_t deviceAddress;
+    uint8_t  buffer[BYTES_PER_WORD];
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //status_int = i2c_master_write_register(deviceAddress, index, &data, 2);
+    //decoupage 16-bit en MSB-LSB
+    buffer[0] = (uint8_t)(data >> 8);
+    buffer[1] = (uint8_t)(data &  0x00FF);
 
-	if (status_int != 0)
+    //status_int = i2c_master_write_register(deviceAddress, index, buffer, BYTES_PER_WORD);
+
+	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -180,12 +185,19 @@ VL53L0X_Error VL53L0X_WrDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t data){
     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
     int32_t status_int=VL53L0X_ERROR_UNDEFINED;
 	uint8_t deviceAddress;
+    uint8_t  buffer[BYTES_PER_DWORD];
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //status_int = i2c_master_write_register(deviceAddress, index, &data, 4);
+    //decoupage 32-bit en MSB-LSB
+    buffer[0] = (uint8_t) (data >> 24);
+    buffer[1] = (uint8_t)((data &  0x00FF0000) > 16);
+    buffer[2] = (uint8_t)((data &  0x0000FF00) > 8);
+    buffer[3] = (uint8_t) (data &  0x000000FF);
 
-	if (status_int != 0)
+    status_int = i2c_master_write_register(deviceAddress, index, buffer, BYTES_PER_DWORD);
+
+	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -201,14 +213,14 @@ VL53L0X_Error VL53L0X_UpdateByte(VL53L0X_DEV Dev, uint8_t index, uint8_t AndData
 
     //status_int = i2c_master_read_register(deviceAddress, index, &data, 1);
 
-    if (status_int != 0)
+    if (status_int != I2CM_OK)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     if (Status == VL53L0X_ERROR_NONE) {
         data = (data & AndData) | OrData;
         //status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
 
-        if (status_int != 0)
+        if (status_int != I2CM_OK)
             Status = VL53L0X_ERROR_CONTROL_INTERFACE;
     }
 
@@ -222,9 +234,9 @@ VL53L0X_Error VL53L0X_RdByte(VL53L0X_DEV Dev, uint8_t index, uint8_t *data){
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //status_int = i2c_master_read_register(deviceAddress, index, &data, 1);
+    status_int = i2c_master_read_register(deviceAddress, index, data, 1);
 
-    if (status_int != 0)
+    if (status_int != I2CM_OK)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -234,12 +246,14 @@ VL53L0X_Error VL53L0X_RdWord(VL53L0X_DEV Dev, uint8_t index, uint16_t *data){
     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
     int32_t status_int=VL53L0X_ERROR_UNDEFINED;
     uint8_t deviceAddress;
+    uint8_t  buffer[BYTES_PER_WORD];
 
     deviceAddress = Dev->I2cDevAddr;
+    
+    status_int = i2c_master_read_register(deviceAddress, index, buffer, BYTES_PER_DWORD);
+    *data = ((uint32_t)buffer[0]<<24) + ((uint32_t)buffer[1]<<16) + ((uint32_t)buffer[2]<<8) + (uint32_t)buffer[3];
 
-    //status_int = i2c_master_read_register(deviceAddress, index, &data, 2);
-
-    if (status_int != 0)
+    if (status_int != I2CM_OK)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -249,12 +263,14 @@ VL53L0X_Error  VL53L0X_RdDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t *data){
     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
     int32_t status_int=VL53L0X_ERROR_UNDEFINED;
     uint8_t deviceAddress;
+    uint8_t  buffer[BYTES_PER_DWORD];
 
     deviceAddress = Dev->I2cDevAddr;
+    
+    status_int = i2c_master_read_register(deviceAddress, index, buffer, BYTES_PER_DWORD);
+    *data = ((uint32_t)buffer[0]<<24) + ((uint32_t)buffer[1]<<16) + ((uint32_t)buffer[2]<<8) + (uint32_t)buffer[3];
 
-    //status_int = i2c_master_read_register(deviceAddress, index, &data, 4);
-
-    if (status_int != 0)
+    if (status_int != I2CM_OK)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
