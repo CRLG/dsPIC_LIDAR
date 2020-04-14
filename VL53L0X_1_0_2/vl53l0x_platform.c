@@ -61,7 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *    Per Device potentially dynamic allocated. Requires VL6180x_GetI2cBuffer() to be implemented.
  * @ingroup Configuration
  */
-#define I2C_BUFFER_CONFIG 1
+#define I2C_BUFFER_CONFIG 0
 /** Maximum buffer size to be used in i2c */
 #define VL53L0X_MAX_I2C_XFER_SIZE   64 /* Maximum buffer size to be used in i2c */
 
@@ -113,11 +113,17 @@ VL53L0X_Error VL53L0X_WriteMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata,
     }
 
 	deviceAddress = Dev->I2cDevAddr;
+    
+    while(count>0)
+    {
+        status_int = status_int+i2c_master_write_register(deviceAddress, index, pdata,1);
 
-    //FONCTION D'ECRITURE I2C
-	//status_int = VL53L0X_write_multi(deviceAddress, index, pdata, count);
+        index++;
+        pdata++;
+        count--;
+    }
 
-	if (status_int != 0)
+	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     return Status;
@@ -134,10 +140,15 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
         Status = VL53L0X_ERROR_INVALID_PARAMS;
     }
 
-    deviceAddress = Dev->I2cDevAddr;
-
-    //FONCTION DE LECTURE I2C
-	//status_int = VL53L0X_read_multi(deviceAddress, index, pdata, count);
+	deviceAddress = Dev->I2cDevAddr;
+    
+    while(count>0)
+    {
+        status_int =status_int+i2c_master_read_register(deviceAddress, index, pdata,1);
+        index++;
+        pdata++;
+        count--;
+    }
 
 	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -173,7 +184,7 @@ VL53L0X_Error VL53L0X_WrWord(VL53L0X_DEV Dev, uint8_t index, uint16_t data){
     buffer[0] = (uint8_t)(data >> 8);
     buffer[1] = (uint8_t)(data &  0x00FF);
 
-    //status_int = i2c_master_write_register(deviceAddress, index, buffer, BYTES_PER_WORD);
+    status_int = i2c_master_write_register(deviceAddress, index, buffer, BYTES_PER_WORD);
 
 	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -191,8 +202,8 @@ VL53L0X_Error VL53L0X_WrDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t data){
 
     //decoupage 32-bit en MSB-LSB
     buffer[0] = (uint8_t) (data >> 24);
-    buffer[1] = (uint8_t)((data &  0x00FF0000) > 16);
-    buffer[2] = (uint8_t)((data &  0x0000FF00) > 8);
+    buffer[1] = (uint8_t)((data &  0x00FF0000) >> 16);
+    buffer[2] = (uint8_t)((data &  0x0000FF00) >> 8);
     buffer[3] = (uint8_t) (data &  0x000000FF);
 
     status_int = i2c_master_write_register(deviceAddress, index, buffer, BYTES_PER_DWORD);
