@@ -56,6 +56,7 @@
 
 #include <xc.h>
 #include <libpic30.h>
+#include <stdio.h>
 #include "eeprom.h"
 #include "lidar_registers.h"
 #include "i2c_slavedrv.h"
@@ -168,6 +169,7 @@ void Sequenceur(void)
   if (cpt1sec >= TEMPO_1sec) {
     cpt1sec = 0;
  
+    printf("Hello %c", data[0]);
   }
 }
 
@@ -248,5 +250,6 @@ void uart_irq_rx_callback(unsigned char data)
     LATAbits.LATA4 = ~LATAbits.LATA4;
     // pour les essais uniquement
     //uart_send_byte(data);
+    
 }
 

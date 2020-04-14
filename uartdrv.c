@@ -56,3 +56,18 @@ void __attribute__ ( (interrupt, no_auto_psv) ) _U1ErrInterrupt( void )
     IFS4bits.U1EIF = 0;  // Clear the Error Interrupt Flag
 }
 
+// _______________________________________________
+// Réimplémente la fonction write pour bénéficier de la fonction printf
+// en redirigeant le flux de sortie vers l'UART
+// Pour optimiser, tous les flux de sortie sont redirigés vers l'UART : fwrite, printf, ... (donc pas de test sur handle)
+// Voir doc Microchip DS50001456
+int __attribute__((__section__(".libc.write")))
+  write(int handle, void *buffer, unsigned int len) 
+{
+    (void)handle;
+    int i;
+    for (i=0; i<len; i++) {
+        uart_send_byte(*(((unsigned char*)buffer)+i));
+    }
+    return(len);
+}
