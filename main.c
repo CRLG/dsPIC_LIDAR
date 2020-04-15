@@ -54,6 +54,7 @@
 //      => WDTPRE = 128 et WDTPOST = 256
 //      => Treset_watchdog = (1/32e3) * 128 * 256 = 1.024sec
 
+#include "General.h"    // A mettre en 1er car contient FCY
 #include <xc.h>
 #include <libpic30.h>
 #include <stdio.h>
@@ -64,7 +65,8 @@
 #include "i2c_masterdrv.h"
 #include "mcp23017.h"
 #include "uartdrv.h"
-#include "General.h"
+#include "xbeedriver.h"
+
 
 // Constates
 
@@ -253,6 +255,31 @@ void uart_irq_rx_callback(unsigned char data)
     LATAbits.LATA4 = ~LATAbits.LATA4;
     // pour les essais uniquement
     //uart_send_byte(data);
+    xbee_decode(data);
     
 }
 
+// ============================================================
+//                          XBEE
+// Ré-implémentation des fonctions XBEE en lien avec le hardware
+// ============================================================
+// ___________________________________________________________
+// callback : useful data receveid
+void xbee_readyBytes_callback(unsigned char *buff_data, unsigned char buff_size, unsigned short source_id)
+{
+    // TODO : 
+    // Utiliser les données
+}
+// ___________________________________________________________
+// this method is called by driver to write a buffer to physical serial port on specific hardware
+void xbee_write(unsigned char *buff_data, unsigned char buff_size)
+{
+    uart_send(buff_data, buff_size);
+}
+
+// ___________________________________________________________
+// this method is called by driver to request a delay on specific hardware
+void xbee_delay_us(unsigned long delay)
+{
+    __delay_us(delay);
+}

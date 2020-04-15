@@ -7,7 +7,8 @@
 
 #define F_FOSC       46062500       // [MHz]
 #define F_FCY       (F_FOSC/2)      // Fréquence pour l'exécution des instructions
-#define F_FP        F_CYCLE         // Fréquence de base pour les périphériques
+#define F_FP        F_FCY         // Fréquence de base pour les périphériques
+#define FCY         F_FCY
 
 #define I2C_SLAVE_DEFAULT_ADDRESS_8bits (0x50)  // A terme, mettre une adresse par défaut qui n'est pas une de celle déjà utilisée par les autres dsPIC 
 #define I2C_MCP23017_I2C_ADDRESS        (0x48)
