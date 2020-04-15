@@ -1,6 +1,8 @@
 #ifndef _LIDAR_H_
 #define _LIDAR_H_
 
+#include "vl53l0x_types.h"
+
 typedef enum {
     TELEMETER_1 = 1,
     TELEMETER_2,
@@ -19,7 +21,7 @@ typedef enum {
 
 void lidar_init();
 unsigned char lidar_autotest(tTelemeterIndex index);
-unsigned char lidar_read_distance(tTelemeterIndex index);
+uint16_t lidar_read_distance(tTelemeterIndex index);
 void lidar_change_i2c_addr(tTelemeterIndex index, unsigned char new_addr);
 void lidar_enable(tTelemeterIndex index, unsigned char enable);
 unsigned char lidar_get_status(tTelemeterIndex index);

@@ -94,11 +94,11 @@ int main ( void )
     Init_Ports();
     Init_IRQ_Priority();
     lidar_registers_init();
-    lidar_init();
     i2c_slave_init(dsPIC_reg[REG_I2C_8BITS_ADDRESS].val);  // restitution de la valeur configurée en EEPROM
     i2c_master_init();
     mcp23017_init(I2C_MCP23017_I2C_ADDRESS);
     mcp23017_configDirections(0, 0);
+    lidar_init();
     uart_init();
     Init_Timer1();
     Init_Watchdog();
