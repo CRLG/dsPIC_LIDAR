@@ -114,14 +114,9 @@ VL53L0X_Error VL53L0X_WriteMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata,
 
 	deviceAddress = Dev->I2cDevAddr;
     
-    while(count>0)
-    {
-        status_int = status_int+i2c_master_write_register(deviceAddress, index, pdata,1);
 
-        index++;
-        pdata++;
-        count--;
-    }
+    status_int = i2c_master_write_register(deviceAddress, index, pdata,count);
+
 
 	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -141,14 +136,8 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     }
 
 	deviceAddress = Dev->I2cDevAddr;
-    
-    while(count>0)
-    {
-        status_int =status_int+i2c_master_read_register(deviceAddress, index, pdata,1);
-        index++;
-        pdata++;
-        count--;
-    }
+
+    status_int =i2c_master_read_register(deviceAddress, index, pdata,count);
 
 	if (status_int != I2CM_OK)
 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -222,14 +211,14 @@ VL53L0X_Error VL53L0X_UpdateByte(VL53L0X_DEV Dev, uint8_t index, uint8_t AndData
 
     deviceAddress = Dev->I2cDevAddr;
 
-    //status_int = i2c_master_read_register(deviceAddress, index, &data, 1);
+    status_int = i2c_master_read_register(deviceAddress, index, &data, 1);
 
     if (status_int != I2CM_OK)
         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
 
     if (Status == VL53L0X_ERROR_NONE) {
         data = (data & AndData) | OrData;
-        //status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
+        status_int = i2c_master_write_register(deviceAddress, index, &data, 1);
 
         if (status_int != I2CM_OK)
             Status = VL53L0X_ERROR_CONTROL_INTERFACE;
@@ -293,7 +282,14 @@ VL53L0X_Error VL53L0X_PollingDelay(VL53L0X_DEV Dev){
     LOG_FUNCTION_START("");
 
     //FONCTION D'ATTENTE (type timeout) POUR ATTENDRE UN RESULTAT
-    //a priori inutile pour notre projet
+    //Noralement juste utile en cas de mesure en continu
+    //TODO: a potarder ou mettre un timer d'une ms
+    uint8_t nbLoops=VL53L0X_POLLINGDELAY_LOOPNB;
+   
+    while(nbLoops>0)
+    {
+        nbLoops--;
+    }
 
     LOG_FUNCTION_END(status);
     return status;
