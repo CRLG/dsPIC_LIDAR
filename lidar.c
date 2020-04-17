@@ -128,13 +128,13 @@ unsigned char lidar_autotest(tTelemeterIndex index)
 }
 
 // ___________________________________________________________
-uint16_t lidar_read_distance(tTelemeterIndex index)
+unsigned char lidar_read_distance(tTelemeterIndex index)
 {
-    uint16_t rangeValue=0;
+    unsigned char rangeValue=0;
     if(index>=NUMBER_OF_TELEMETERS)
         return rangeValue;
     
-    rangeValue=0xFFFF;
+    rangeValue=0xFF;
     
     int8_t int_status=VL53L0X_ERROR_NONE;
     VL53L0X_Dev_t * m_telemeter_handle=m_sensor_handle+index-1;
@@ -151,7 +151,9 @@ uint16_t lidar_read_distance(tTelemeterIndex index)
     //la donnée de mesure est valide, si elle n'est pas valide on garde la valeur infinie
     if(RangingMeasurementData.RangeStatus==0)
     {
-        rangeValue=RangingMeasurementData.RangeMilliMeter;
+        uint16_t rangeValue_mm=RangingMeasurementData.RangeMilliMeter;
+        if(rangeValue_mm<=2500)
+            rangeValue=(rangeValue_mm)/10;
         //printf("Distance: %d\n", RangingMeasurementData.RangeMilliMeter);
     }
 
