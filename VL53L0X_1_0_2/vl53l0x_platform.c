@@ -37,7 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vl53l0x_platform.h"
 #include "vl53l0x_i2c_platform.h"
 #include "vl53l0x_api.h"
-#include "../i2c_masterdrv.h"
+#include "i2c_masterdrv.h"
+#include "platform_specific.h"
 
 #define LOG_FUNCTION_START(fmt, ... )           _LOG_FUNCTION_START(TRACE_MODULE_PLATFORM, fmt, ##__VA_ARGS__)
 #define LOG_FUNCTION_END(status, ... )          _LOG_FUNCTION_END(TRACE_MODULE_PLATFORM, status, ##__VA_ARGS__)
@@ -283,13 +284,7 @@ VL53L0X_Error VL53L0X_PollingDelay(VL53L0X_DEV Dev){
 
     //FONCTION D'ATTENTE (type timeout) POUR ATTENDRE UN RESULTAT
     //Noralement juste utile en cas de mesure en continu
-    //TODO: a potarder ou mettre un timer d'une ms
-    uint8_t nbLoops=VL53L0X_POLLINGDELAY_LOOPNB;
-   
-    while(nbLoops>0)
-    {
-        nbLoops--;
-    }
+    _app_delay_ms(1);
 
     LOG_FUNCTION_END(status);
     return status;
