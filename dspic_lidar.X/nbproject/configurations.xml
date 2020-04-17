@@ -13,6 +13,7 @@
       <itemPath>../i2c_masterdrv.h</itemPath>
       <itemPath>../uartdrv.h</itemPath>
       <itemPath>../lidar.h</itemPath>
+      <itemPath>../platform_specific.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"

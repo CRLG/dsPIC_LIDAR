@@ -259,6 +259,27 @@ void uart_irq_rx_callback(unsigned char data)
     
 }
 
+
+// ============================================================
+//      FONCTIONS COMMUNES MISES A DISPO PAR L'APPLICATIF
+// Ré-implémentation des fonctions en lien avec le hardware
+// ============================================================
+
+// ___________________________________________________________
+// this method is called by drivers to request a delay on specific hardware
+void _app_delay_us(unsigned long delay)
+{
+    __delay_us(delay);
+}
+
+// ___________________________________________________________
+// this method is called by drivers to request a delay on specific hardware
+void _app_delay_ms(unsigned long delay)
+{
+    __delay_ms(delay);
+}
+
+
 // ============================================================
 //                          XBEE
 // Ré-implémentation des fonctions XBEE en lien avec le hardware
@@ -277,9 +298,3 @@ void xbee_write(unsigned char *buff_data, unsigned char buff_size)
     uart_send(buff_data, buff_size);
 }
 
-// ___________________________________________________________
-// this method is called by driver to request a delay on specific hardware
-void xbee_delay_us(unsigned long delay)
-{
-    __delay_us(delay);
-}

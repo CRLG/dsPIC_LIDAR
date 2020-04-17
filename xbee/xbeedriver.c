@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "xbeedriver.h"
+#include "platform_specific.h"
 
 //Parametres xbee
 static unsigned char m_panid[4];
@@ -22,8 +23,6 @@ static xmessage_state m_xmessage_state = XBEE_HEADER;
 extern void xbee_readyBytes_callback(unsigned char *buff_data, unsigned char buff_size, unsigned short source_id);
 // this method is called by driver to write a buffer to physical serial port on specific hardware
 extern void xbee_write(unsigned char *buff_data, unsigned char buff_size);
-// this method is called by driver to request a delay on specific hardware
-extern void xbee_delay_us(unsigned long delay);
 
 
 // ____________________________________________________________
@@ -69,29 +68,29 @@ tXbeeErr xbee_init(const tXbeeSettings *settings)
     unsigned long delay = 100000;
     unsigned long delay_1sec2 = 1200000;
 
-    xbee_delay_us(delay_1sec2);
+    _app_delay_us(delay_1sec2);
     unsigned char Plus[] = "+++";
     xbee_write(Plus, 3);
-    xbee_delay_us(delay_1sec2);
+    _app_delay_us(delay_1sec2);
 
     xbee_setRegister_buffer("ID", m_panid, 4);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_buffer("CH", m_channel, 2);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_byte("MY", m_id);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_byte("CE", m_coordinator);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_byte("EE", m_security);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_buffer("KY", m_key, 32);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_byte("A2", m_coordinator_option);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_setRegister_byte("AP", m_apimode);
-    xbee_delay_us(delay);
+    _app_delay_us(delay);
     xbee_getRegister("CN");      //apply parameters
-    xbee_delay_us(delay_1sec2);
+    _app_delay_us(delay_1sec2);
 
     m_xmessage_state = XBEE_HEADER;
 
