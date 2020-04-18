@@ -19,9 +19,17 @@ typedef enum {
     ALL_TELEMETERS = 0xFF
 }tTelemeterIndex;
 
+typedef enum {
+    DEFAULT_RANGE = 0,
+    LONG_RANGE,
+    ACCURATE_RANGE,
+    FAST_RANGE,
+    CUSTOM_RANGE = 0xFF
+}tTelemeterMode;
+
 void lidar_init();
 unsigned char lidar_calibration(tTelemeterIndex index);
-unsigned char lidar_settings(tTelemeterIndex index);
+unsigned char lidar_settings(tTelemeterIndex index, int iMode);
 unsigned char lidar_autotest(tTelemeterIndex index);
 unsigned char lidar_read_distance(tTelemeterIndex index);
 unsigned char lidar_change_i2c_addr(tTelemeterIndex index, unsigned char new_addr);

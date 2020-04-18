@@ -26,7 +26,7 @@ void lidar_init()
     
     lidar_change_i2c_addr(TELEMETER_1,0x54);
     lidar_calibration(TELEMETER_1);
-    lidar_settings(TELEMETER_1);
+    lidar_settings(TELEMETER_1,LONG_RANGE);
 }
 
 // ___________________________________________________________
@@ -89,7 +89,7 @@ unsigned char lidar_calibration(tTelemeterIndex index)
 }
 
 // ___________________________________________________________
-unsigned char lidar_settings(tTelemeterIndex index)
+unsigned char lidar_settings(tTelemeterIndex index, int iMode)
 {
     unsigned char errorSetting=1;
     if(index>=NUMBER_OF_TELEMETERS)
@@ -104,14 +104,66 @@ unsigned char lidar_settings(tTelemeterIndex index)
         int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
 
     //Activation/désactivation des vérifications du sigma et du signal (tiré d'un exemple d'utilisation - à potarder plus tard)
-    if (int_status == VL53L0X_ERROR_NONE)
-        int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
-    if (int_status == VL53L0X_ERROR_NONE)
-        int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
-    if (int_status == VL53L0X_ERROR_NONE)
-        int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, 1);
-    if (int_status == VL53L0X_ERROR_NONE)
-        int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, (FixPoint1616_t)(1.5*0.023*65536));
+    switch(iMode)
+    {
+        case DEFAULT_RANGE:
+            break;
+        case LONG_RANGE:
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, (FixPoint1616_t)(0.1*65536));
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, (FixPoint1616_t)(60*65536));			
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetMeasurementTimingBudgetMicroSeconds(m_telemeter_handle, 33000);
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetVcselPulsePeriod(m_telemeter_handle, VL53L0X_VCSEL_PERIOD_PRE_RANGE, 18);
+            if (int_status == VL53L0X_ERROR_NONE) 
+                int_status = VL53L0X_SetVcselPulsePeriod(m_telemeter_handle, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, 14);
+            
+        case ACCURATE_RANGE:
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);		
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, (FixPoint1616_t)(0.25*65536));		
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, (FixPoint1616_t)(18*65536));			
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetMeasurementTimingBudgetMicroSeconds(m_telemeter_handle, 200000);
+            break;
+            
+        case FAST_RANGE:
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, (FixPoint1616_t)(0.25*65536));			
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, (FixPoint1616_t)(32*65536));			
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetMeasurementTimingBudgetMicroSeconds(m_telemeter_handle, 30000);
+            break;
+      
+        case CUSTOM_RANGE:
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckEnable(m_telemeter_handle, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, 1);
+            if (int_status == VL53L0X_ERROR_NONE)
+                int_status = VL53L0X_SetLimitCheckValue(m_telemeter_handle, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, (FixPoint1616_t)(1.5*0.023*65536));
+            break;
+            
+        default:
+            break;      
+    }
 
     if(int_status == VL53L0X_ERROR_NONE)
         errorSetting=0;
