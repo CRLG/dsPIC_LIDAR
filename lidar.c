@@ -10,6 +10,9 @@
 
 static VL53L0X_Dev_t m_sensor_handle[NUMBER_OF_TELEMETERS];
 
+unsigned char m_range_Started;
+unsigned char m_range_Continuous;
+
 // ___________________________________________________________
 // Initialise le LIDAR
 void lidar_init()
@@ -24,9 +27,13 @@ void lidar_init()
         m_sensor_handle[i].comms_speed_khz =  400;
     }
     
+    m_range_Started=0;
+    m_range_Continuous=0;
+    
     lidar_change_i2c_addr(TELEMETER_1,0x54);
     lidar_calibration(TELEMETER_1);
-    lidar_settings(TELEMETER_1,LONG_RANGE);
+    lidar_settings(TELEMETER_1,LONG_RANGE,1);
+    lidar_start(TELEMETER_1);
 }
 
 // ___________________________________________________________
@@ -89,7 +96,7 @@ unsigned char lidar_calibration(tTelemeterIndex index)
 }
 
 // ___________________________________________________________
-unsigned char lidar_settings(tTelemeterIndex index, int iMode)
+unsigned char lidar_settings(tTelemeterIndex index, int iMode, unsigned char isContinuous)
 {
     unsigned char errorSetting=1;
     if(index>=NUMBER_OF_TELEMETERS)
@@ -100,8 +107,20 @@ unsigned char lidar_settings(tTelemeterIndex index, int iMode)
     
     //Inutile normalement si on veut une mesure simple (paramétrage par défaut)
     if(int_status == VL53L0X_ERROR_NONE)
-        //mesure simple
-        int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
+    {
+        if(isContinuous==1)
+        {
+            //mesure en continu
+            int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
+            m_range_Continuous=1;
+        } 
+        else
+        {
+            //mesure simple
+            int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
+            m_range_Continuous=0;
+        }
+    }
 
     //Activation/désactivation des vérifications du sigma et du signal (tiré d'un exemple d'utilisation - à potarder plus tard)
     switch(iMode)
@@ -172,6 +191,30 @@ unsigned char lidar_settings(tTelemeterIndex index, int iMode)
 }
 
 // ___________________________________________________________
+unsigned char lidar_start(tTelemeterIndex index)
+{
+    unsigned char errorStart=1;
+    if(index>=NUMBER_OF_TELEMETERS)
+        return errorStart;
+    
+    int8_t int_status=VL53L0X_ERROR_NONE;
+    VL53L0X_Dev_t * m_telemeter_handle=m_sensor_handle+index-1;
+    
+    if((m_range_Started==0)&&(m_range_Continuous==1))
+    {
+        int_status = VL53L0X_StartMeasurement(m_telemeter_handle);
+    }
+    
+    if(int_status==VL53L0X_ERROR_NONE)
+    {
+        errorStart=1;
+        m_range_Started=1;
+    }
+    
+    return errorStart;
+}
+
+// ___________________________________________________________
 unsigned char lidar_autotest(tTelemeterIndex index)
 {
     // TODO  
@@ -183,6 +226,8 @@ unsigned char lidar_autotest(tTelemeterIndex index)
 unsigned char lidar_read_distance(tTelemeterIndex index)
 {
     unsigned char rangeValue=0;
+    uint8_t NewDataReady=0;
+    
     if(index>=NUMBER_OF_TELEMETERS)
         return rangeValue;
     
@@ -193,15 +238,29 @@ unsigned char lidar_read_distance(tTelemeterIndex index)
     
     VL53L0X_RangingMeasurementData_t RangingMeasurementData;
 
-    //mesure de distance
-    int_status = VL53L0X_PerformSingleRangingMeasurement(m_telemeter_handle, &RangingMeasurementData);
-
+    if(m_range_Started==0) //on n'est pas en mode continu
+    {
+        //mesure de distance
+        int_status = VL53L0X_PerformSingleRangingMeasurement(m_telemeter_handle, &RangingMeasurementData);
+    }
+    else
+    {   
+        int_status = VL53L0X_GetMeasurementDataReady(m_telemeter_handle, &NewDataReady);
+        
+        //si on n'accède pas aux donnees ou si la mesure n'est pas prete, il faut renvoyer valeur infinie
+        if ((int_status != VL53L0X_ERROR_NONE)||(NewDataReady != 0x01))
+            return rangeValue; 
+        
+        //mesure de distance
+        int_status = VL53L0X_GetRangingMeasurementData(m_telemeter_handle, &RangingMeasurementData);
+    }
+    
     //si la mesure s'est mal passée, il faut renvoyer valeur infinie
     if (int_status != VL53L0X_ERROR_NONE)
         return rangeValue;
-
+    
     //la donnée de mesure est valide, si elle n'est pas valide on garde la valeur infinie
-    if(RangingMeasurementData.RangeStatus==0)
+    if(RangingMeasurementData.RangeStatus<=2)
     {
         uint16_t rangeValue_mm=RangingMeasurementData.RangeMilliMeter;
         if(rangeValue_mm<=2500)
@@ -309,6 +368,7 @@ unsigned char lidar_ping(tTelemeterIndex index)
 // ___________________________________________________________
 void lidar_periodic_call()
 {
+    lidar_read_distance(TELEMETER_1);
     // TODO
     //   Lecture des distances brutes de chaque télémètre actif
     //   Filtrage des données brutes
