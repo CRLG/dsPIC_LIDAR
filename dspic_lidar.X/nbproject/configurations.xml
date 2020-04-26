@@ -14,6 +14,7 @@
       <itemPath>../uartdrv.h</itemPath>
       <itemPath>../lidar.h</itemPath>
       <itemPath>../platform_specific.h</itemPath>
+      <itemPath>../uart2drv.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -36,6 +37,7 @@
       <itemPath>../i2c_masterdrv.c</itemPath>
       <itemPath>../uartdrv.c</itemPath>
       <itemPath>../lidar.c</itemPath>
+      <itemPath>../uart2drv.c</itemPath>
     </logicalFolder>
     <logicalFolder name="f1" displayName="VL53L0X_1_0_2" projectFiles="true">
       <logicalFolder name="f1" displayName="Header Files" projectFiles="true">
