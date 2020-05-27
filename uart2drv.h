@@ -12,6 +12,4 @@ void uart2_send(unsigned char *buff, unsigned short len);
 // Le contenu de la fonction doit être le plus court possible car toujours sous interruption
 void uart2_irq_rx_callback(unsigned char data);
 
-void uart2_send_buffer_dma(unsigned short size);
-
 #endif  // _UART2_DRIVER_H_
