@@ -102,33 +102,14 @@ int main (void)
     i2c_master_init();
     mcp23017_init(I2C_MCP23017_I2C_ADDRESS);
     mcp23017_configDirections(0, 0);
-    ws2812b_init();
     lidar_init();
     uart_init();
     uart2_init();
+    ws2812b_init();
     Init_Timer1();
     Init_Watchdog();
  
     printf("\n\r Starting #...\n\r");
-    
-    int b;
-    for (b=0x50; b<0x70; b+=2) {
-        if (i2c_master_ping(b)) {
-            printf("Ping : 0x%x\n\r", b);
-        }
-    }
-    
-    __delay_ms(1000);
-    
-    // Pour les tests
-    /*
-    unsigned int i;
-    for (i=0; i<80-2; i++) {
-        UART1_DMA_BUFFER[i] = '0' + i;
-    }
-    UART1_DMA_BUFFER[i] = '\n';
-    UART1_DMA_BUFFER[++i] = '\r';
-    */
     
 	while(1)
 	{
@@ -152,25 +133,21 @@ void Sequenceur(void)
   static unsigned int cpt1sec = 0;
   static unsigned int cpt2sec = 0;
   static unsigned int cpt5sec = 0;
-  static unsigned char data[10] = { 3, 12, 1, 16};
-  static unsigned char cptErrorCom = 0;
-  static unsigned char led_bleue=0;
-  static unsigned char toggle_fond=0;
+  static unsigned char start_led=0;
  
   // ______________________________
   cpt10msec++;
   if (cpt10msec >= TEMPO_10msec) {
   	cpt10msec = 0;
 
-    //uart2_send_buffer_dma(16*24);
   }
 
   // ______________________________
   cpt20msec++;
   if (cpt20msec >= TEMPO_20msec) {
     cpt20msec = 0;
+
     Refresh_Watchdog();
-    //uart_send_buffer_dma(80);
    }
 
 
@@ -185,21 +162,21 @@ void Sequenceur(void)
     distance = lidar_read_distance(TELEMETER_1);
     LATAbits.LATA4 = ~LATAbits.LATA4;    
 
-    
-   int i;
+    int i;
     for (i=0; i<16; i++) {
-        int intensite = 0xF * toggle_fond;
-        if (i%2) {
-            ws2812b_setLED(i, intensite, 0,      0);
-        }
-        else {
-            ws2812b_setLED(i, 0, intensite,      0);
-        }
+        unsigned char index = start_led + i;
+        ws2812b_setColor(index%16, 0x0000A*(i+1));
     }
-    if (++led_bleue >=16) led_bleue=0;
-    ws2812b_setLED(led_bleue, 0, 0, 0xFF);
+    /*
+    ws2812b_configOnOffColor(4, BLUE, RED);
+    ws2812b_setPattern(4, 10, 10);
 
-    //ws2812b_setLED(0, distance, 0,      0);
+    ws2812b_configOnOffColor(12, PURPLE, OLIVE);
+    ws2812b_setPattern(12, 20, 10);
+   */
+
+    if (++start_led >=16) start_led = 0;;
+
     ws2812b_periodicTask();
   }
 
@@ -215,9 +192,6 @@ void Sequenceur(void)
   cpt200msec++;
   if (cpt200msec >= TEMPO_200msec) {
     cpt200msec = 0;
-    //unsigned char led_buff[6] = { 200, 0, 0, 0, 0, 0};
-    
-    //uart2_send(led_buff, 6);
 
   }
   // ______________________________
@@ -232,8 +206,6 @@ void Sequenceur(void)
   if (cpt1sec >= TEMPO_1sec) {
     cpt1sec = 0;
 
-    if (toggle_fond==0) toggle_fond=1;
-    else toggle_fond = 0;
   }
   // ______________________________
   cpt2sec++;

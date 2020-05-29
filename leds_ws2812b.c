@@ -2,6 +2,17 @@
 #include "leds_ws2812b.h"
 #include "uart2drv.h"
 
+typedef struct 
+{
+    unsigned char Toff;             // Durée à l'état OFF
+    unsigned char Ton;              // Durée à l'état ON
+    unsigned long ColorOff;         // Couleur de l'état OFF
+    unsigned long ColorOn;          // Couleur de l'état ON
+    unsigned char Timer;            // Compteur de temps
+    unsigned char CurrentState;     // Mémorise l'état courant OFF ou ON
+}tWS2812BPattern;
+
+
 #define NB_OF_LEDS   16     // 16 LED à contrôler
 #define BITS_PER_LED 24     // 1 LED = 24 bits (1 octet UART utilisé pour coder 1 bit)
 #define LED_DMA_BUFFER_SIZE (NB_OF_LEDS*BITS_PER_LED)
@@ -10,24 +21,92 @@
 
 static unsigned int LED_WS2812B_DMA_BUFFER[LED_DMA_BUFFER_SIZE];
 static unsigned char ws2812b_dma_transfer_in_progress = 0;
+static tWS2812BPattern LED_WS2812B[NB_OF_LEDS];
+
+void ws2812b_setLED_dma(unsigned short index, unsigned char R, unsigned char G, unsigned char B);
+void ws2812b_setLED2_dma(unsigned short index, unsigned long rgb);
 
 
 // _______________________________________________
 void ws2812b_init()
 {
     int i;
+    for (i=0; i<NB_OF_LEDS; i++) {
+        LED_WS2812B[i].Ton          = 0;
+        LED_WS2812B[i].Toff         = 0;
+        LED_WS2812B[i].Timer        = 0;
+        LED_WS2812B[i].ColorOn      = BLUE;
+        LED_WS2812B[i].ColorOff     = OFF_BLACK;
+        
+    }
+    ws2812b_periodicTask();
+    
+    /*
     for (i=0; i<LED_DMA_BUFFER_SIZE; i++) {
        LED_WS2812B_DMA_BUFFER[i] = WS2812B_CODE_0; 
     }
+    */
 }
 
+// =======================================================
+//                      API
+// =======================================================
+void ws2812b_setState(unsigned short index, unsigned char state)
+{
+    if (index >= NB_OF_LEDS) return;
+    
+    if (state == 0) {   // Force l'état OFF
+        LED_WS2812B[index].Ton  = 0;
+        LED_WS2812B[index].Toff = 1;
+    }
+    else {              // Force l'état ON
+        LED_WS2812B[index].Ton  = 1;
+        LED_WS2812B[index].Toff = 0;
+    }
+}
 
+// _______________________________________________
+void ws2812b_setColor(unsigned short index, unsigned long rgb)
+{
+    if (index >= NB_OF_LEDS) return;
+    
+    LED_WS2812B[index].ColorOn = rgb;
+    ws2812b_setState(index, 1);
+}
+
+// _______________________________________________
+void ws2812b_configOnOffColor(unsigned short index, unsigned long on_rgb, unsigned long off_rgb)
+{
+    if (index >= NB_OF_LEDS) return;
+
+    LED_WS2812B[index].ColorOn  = on_rgb;
+    LED_WS2812B[index].ColorOff = off_rgb;
+}
+
+// _______________________________________________
+void ws2812b_setPattern(unsigned short index, unsigned char ton, unsigned char toff)
+{
+    if (index >= NB_OF_LEDS) return;
+    
+    if ( (LED_WS2812B[index].Ton == ton) && (LED_WS2812B[index].Toff== toff) ) {
+        // Ne rien faire
+        return;
+    }
+    LED_WS2812B[index].Ton  = ton;
+    LED_WS2812B[index].Toff = toff;
+    LED_WS2812B[index].Timer = 0;
+
+}
+
+// =======================================================
+//                     DMA BUFFER
+// =======================================================
 // _______________________________________________
 //                 LED0                |                LED1 ...
 // [     G;         R;        B]       |[     G;         R;        B]       
 // [ [G7...G0] [R7....R0] [B7...B0] ]  |[ [G7...G0] [R7....R0] [B7...B0] ]
 //     8bits     8bits      8bits      |    8bits     8bits      8bits
-void ws2812b_setLED(unsigned short index, unsigned char R, unsigned char G, unsigned char B)
+void ws2812b_setLED_dma(unsigned short index, unsigned char R, unsigned char G, unsigned char B)
 {
     unsigned short i = index * 24;
     int j;
@@ -46,6 +125,16 @@ void ws2812b_setLED(unsigned short index, unsigned char R, unsigned char G, unsi
         LED_WS2812B_DMA_BUFFER[i++] = ((B>>j)&0x01)?WS2812B_CODE_1:WS2812B_CODE_0;
     }
 }
+
+// _______________________________________________
+void ws2812b_setLED_dma2(unsigned short index, unsigned long rgb)
+{
+    unsigned char r = (rgb>>16)&0xFF;
+    unsigned char g = (rgb>> 8)&0xFF;
+    unsigned char b = (rgb>> 0)&0xFF;
+    ws2812b_setLED_dma(index, r, g, b);
+}   
+
 
 // _______________________________________________
 static void ws2812b_send_buffer_dma()
@@ -76,7 +165,35 @@ void __attribute__((__interrupt__,no_auto_psv)) _DMA1Interrupt(void)
 }
 
 // _______________________________________________
+static void ws2812b_compute_led_state(unsigned short index)
+{
+    if (LED_WS2812B[index].Ton == 0) {
+        LED_WS2812B[index].CurrentState = 0;
+        return;
+    }
+    if (LED_WS2812B[index].Toff == 0) {
+        LED_WS2812B[index].CurrentState = 1;
+        return;
+    }
+    
+    LED_WS2812B[index].CurrentState = (LED_WS2812B[index].Timer < LED_WS2812B[index].Ton);
+
+    unsigned short period = LED_WS2812B[index].Ton + LED_WS2812B[index].Toff;
+    if (++LED_WS2812B[index].Timer > period) {
+        LED_WS2812B[index].Timer = 0;
+    }
+}
+
+// _______________________________________________
 void ws2812b_periodicTask()
 {
-   ws2812b_send_buffer_dma(LED_WS2812B_DMA_BUFFER, LED_DMA_BUFFER_SIZE);
+    unsigned short i;
+    for (i=0; i<NB_OF_LEDS; i++) {
+       ws2812b_compute_led_state(i);
+       unsigned long _color = LED_WS2812B[i].CurrentState==0?LED_WS2812B[i].ColorOff:LED_WS2812B[i].ColorOn;
+       // met à jour le buffer DMA avant le transfert
+       ws2812b_setLED_dma2(i, _color);
+    }
+    ws2812b_send_buffer_dma(LED_WS2812B_DMA_BUFFER, LED_DMA_BUFFER_SIZE);
 }
+
