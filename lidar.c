@@ -8,10 +8,7 @@
 #include "vl53l0x_def.h"
 #include "vl53l0x_api.h"
 
-static VL53L0X_Dev_t m_sensor_handle[NUMBER_OF_TELEMETERS];
-
-unsigned char m_range_Started;
-unsigned char m_range_Continuous;
+static VL53L0X_Dev_t m_sensor_handle[NUMBER_MAX_OF_TELEMETERS];
 
 // ___________________________________________________________
 // Initialise le LIDAR
@@ -19,7 +16,7 @@ void lidar_init()
 {
     uint8_t i=0;
        
-    for(i=0;i<NUMBER_OF_TELEMETERS;i++)
+    for(i=0;i<NUMBER_MAX_OF_TELEMETERS;i++)
     {
         //adresse et mode par défaut
         m_sensor_handle[i].I2cDevAddr      = 0x52;
@@ -27,20 +24,16 @@ void lidar_init()
         m_sensor_handle[i].comms_speed_khz =  400;
     }
     
-    m_range_Started=0;
-    m_range_Continuous=0;
-    
-    lidar_change_i2c_addr(TELEMETER_1,0x54);
+    //lidar_change_i2c_addr(TELEMETER_1,0x54);
     lidar_calibration(TELEMETER_1);
-    lidar_settings(TELEMETER_1,LONG_RANGE,1);
-    lidar_start(TELEMETER_1);
+    lidar_settings(TELEMETER_1,FAST_RANGE);
 }
 
 // ___________________________________________________________
 unsigned char lidar_calibration(tTelemeterIndex index)
 {
     unsigned char errorCalibration=1;
-    if(index>=NUMBER_OF_TELEMETERS)
+    if(index>=NUMBER_MAX_OF_TELEMETERS)
         return errorCalibration;
     
     int8_t int_status=VL53L0X_ERROR_NONE;
@@ -96,10 +89,10 @@ unsigned char lidar_calibration(tTelemeterIndex index)
 }
 
 // ___________________________________________________________
-unsigned char lidar_settings(tTelemeterIndex index, int iMode, unsigned char isContinuous)
+unsigned char lidar_settings(tTelemeterIndex index, int iMode)
 {
     unsigned char errorSetting=1;
-    if(index>=NUMBER_OF_TELEMETERS)
+    if(index>=NUMBER_MAX_OF_TELEMETERS)
         return errorSetting;
     
     int8_t int_status=VL53L0X_ERROR_NONE;
@@ -107,20 +100,8 @@ unsigned char lidar_settings(tTelemeterIndex index, int iMode, unsigned char isC
     
     //Inutile normalement si on veut une mesure simple (paramétrage par défaut)
     if(int_status == VL53L0X_ERROR_NONE)
-    {
-        if(isContinuous==1)
-        {
-            //mesure en continu
-            int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
-            m_range_Continuous=1;
-        } 
-        else
-        {
-            //mesure simple
-            int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
-            m_range_Continuous=0;
-        }
-    }
+        //mesure simple
+        int_status = VL53L0X_SetDeviceMode(m_telemeter_handle, VL53L0X_DEVICEMODE_SINGLE_RANGING);
 
     //Activation/désactivation des vérifications du sigma et du signal (tiré d'un exemple d'utilisation - à potarder plus tard)
     switch(iMode)
@@ -191,30 +172,6 @@ unsigned char lidar_settings(tTelemeterIndex index, int iMode, unsigned char isC
 }
 
 // ___________________________________________________________
-unsigned char lidar_start(tTelemeterIndex index)
-{
-    unsigned char errorStart=1;
-    if(index>=NUMBER_OF_TELEMETERS)
-        return errorStart;
-    
-    int8_t int_status=VL53L0X_ERROR_NONE;
-    VL53L0X_Dev_t * m_telemeter_handle=m_sensor_handle+index-1;
-    
-    if((m_range_Started==0)&&(m_range_Continuous==1))
-    {
-        int_status = VL53L0X_StartMeasurement(m_telemeter_handle);
-    }
-    
-    if(int_status==VL53L0X_ERROR_NONE)
-    {
-        errorStart=1;
-        m_range_Started=1;
-    }
-    
-    return errorStart;
-}
-
-// ___________________________________________________________
 unsigned char lidar_autotest(tTelemeterIndex index)
 {
     // TODO  
@@ -226,9 +183,7 @@ unsigned char lidar_autotest(tTelemeterIndex index)
 unsigned char lidar_read_distance(tTelemeterIndex index)
 {
     unsigned char rangeValue=0;
-    uint8_t NewDataReady=0;
-    
-    if(index>=NUMBER_OF_TELEMETERS)
+    if(index>=NUMBER_MAX_OF_TELEMETERS)
         return rangeValue;
     
     rangeValue=0xFF;
@@ -238,34 +193,20 @@ unsigned char lidar_read_distance(tTelemeterIndex index)
     
     VL53L0X_RangingMeasurementData_t RangingMeasurementData;
 
-    if(m_range_Started==0) //on n'est pas en mode continu
-    {
-        //mesure de distance
-        int_status = VL53L0X_PerformSingleRangingMeasurement(m_telemeter_handle, &RangingMeasurementData);
-    }
-    else
-    {   
-        int_status = VL53L0X_GetMeasurementDataReady(m_telemeter_handle, &NewDataReady);
-        
-        //si on n'accède pas aux donnees ou si la mesure n'est pas prete, il faut renvoyer valeur infinie
-        if ((int_status != VL53L0X_ERROR_NONE)||(NewDataReady != 0x01))
-            return rangeValue; 
-        
-        //mesure de distance
-        int_status = VL53L0X_GetRangingMeasurementData(m_telemeter_handle, &RangingMeasurementData);
-    }
-    
+    //mesure de distance
+    int_status = VL53L0X_PerformSingleRangingMeasurement(m_telemeter_handle, &RangingMeasurementData);
+
     //si la mesure s'est mal passée, il faut renvoyer valeur infinie
     if (int_status != VL53L0X_ERROR_NONE)
         return rangeValue;
-    
+
     //la donnée de mesure est valide, si elle n'est pas valide on garde la valeur infinie
     if(RangingMeasurementData.RangeStatus<=2)
     {
         uint16_t rangeValue_mm=RangingMeasurementData.RangeMilliMeter;
         if(rangeValue_mm<=2500)
             rangeValue=(rangeValue_mm)/10;
-        //printf("Distance: %d\n", RangingMeasurementData.RangeMilliMeter);
+        printf("Distance: %d\n", RangingMeasurementData.RangeMilliMeter);
     }
 
     return rangeValue;
@@ -275,7 +216,7 @@ unsigned char lidar_read_distance(tTelemeterIndex index)
 unsigned char lidar_change_i2c_addr(tTelemeterIndex index, unsigned char new_addr)
 {
     unsigned char int_status=1;
-    if(index>=NUMBER_OF_TELEMETERS)
+    if(index>=NUMBER_MAX_OF_TELEMETERS)
         return int_status;
     
     VL53L0X_Dev_t * m_telemeter_handle=m_sensor_handle+index-1;
@@ -368,7 +309,6 @@ unsigned char lidar_ping(tTelemeterIndex index)
 // ___________________________________________________________
 void lidar_periodic_call()
 {
-    lidar_read_distance(TELEMETER_1);
     // TODO
     //   Lecture des distances brutes de chaque télémètre actif
     //   Filtrage des données brutes

@@ -86,6 +86,8 @@ void Init_Ports(void);
 void Init_Watchdog();
 void Init_IRQ_Priority();
 void Refresh_Watchdog();
+void led_management();
+void distance_alarm_management();
 
 
 // ____________________________________
@@ -159,24 +161,27 @@ void Sequenceur(void)
  
     //lidar_periodic_call();
  
-    distance = lidar_read_distance(TELEMETER_1);
+    dsPIC_reg[REG_DISTANCE_TELEMETER_1].val = lidar_read_distance(TELEMETER_1);
+
     LATAbits.LATA4 = ~LATAbits.LATA4;    
 
     int i;
-    for (i=0; i<16; i++) {
-        unsigned char index = start_led + i;
-        ws2812b_setColor(index%16, 0x0000A*(i+1));
+    for (i=0; i<NUMBER_MAX_OF_TELEMETERS; i++) {
+        dsPIC_reg[REG_FORCE_LED1+i].val = LED_FORCE_OFF;
     }
-    /*
-    ws2812b_configOnOffColor(4, BLUE, RED);
-    ws2812b_setPattern(4, 10, 10);
+    //
+    dsPIC_reg[REG_FORCE_LED1].val   = LED_CONTROLED_BY_LIDAR;
+    EEPROM_values[EEPADDR_THRESHOLD_ALERT_TELEMETER_1] = 30;
 
-    ws2812b_configOnOffColor(12, PURPLE, OLIVE);
-    ws2812b_setPattern(12, 20, 10);
-   */
-
-    if (++start_led >=16) start_led = 0;;
-
+        
+    dsPIC_reg[REG_FORCE_LED1+3].val = LED_CONTROLED_BY_LIDAR;
+    //dsPIC_reg[REG_FORCE_LED1+4].val = LED_FORCE_GREEN;
+    //dsPIC_reg[REG_FORCE_LED1+5].val = LED_FORCE_BLUE;
+    dsPIC_reg[REG_DISTANCE_TELEMETER_1+3].val = 30;
+    EEPROM_values[EEPADDR_THRESHOLD_ALERT_TELEMETER_1+3] = 40;
+     
+    distance_alarm_management();
+    led_management();
     ws2812b_periodicTask();
   }
 
@@ -288,6 +293,57 @@ void Init_IRQ_Priority()
     IPC0bits.T1IP       = 1;    // IRQ Timer1 (le plus prioritaire)
     IPC4bits.SI2C1IP    = 2;    // IRQ I2C esclave
     IPC2bits.U1RXIP     = 3;    // IRQ sur réception UART
+}
+
+
+// ___________________________________________________________
+// Conclu pour chaque télémètre à un obstacle détecté
+// 
+void distance_alarm_management()
+{
+    int i;
+    unsigned short _16bits_alarm = 0;
+    for (i=0; i<NUMBER_MAX_OF_TELEMETERS; i++) 
+    {
+        if (dsPIC_reg[REG_DISTANCE_TELEMETER_1+i].val < EEPROM_values[EEPADDR_THRESHOLD_ALERT_TELEMETER_1+i]) {
+            _16bits_alarm |= (1<<i);
+        }
+    }
+    dsPIC_reg[REG_DISTANCE_ALARM_TELEMETERS_H].val =  _16bits_alarm>>8;
+    dsPIC_reg[REG_DISTANCE_ALARM_TELEMETERS_L].val = _16bits_alarm&0xFF;
+}
+
+// ___________________________________________________________
+// Défini l'état des LED
+// 2 modes de fonctionnement pour les LED : 
+//      - Pilotées par la fonction LIDAR : LED n°<i> allumée en fonction de la distance du télémètre n°<i>
+//      - Forcé à une certaine couleur
+void led_management()
+{
+    int i;
+    int obstacles_detected = (dsPIC_reg[REG_DISTANCE_ALARM_TELEMETERS_H].val <<8) | dsPIC_reg[REG_DISTANCE_ALARM_TELEMETERS_L].val;
+    for (i=0; i<NUMBER_MAX_OF_TELEMETERS; i++) 
+    {
+        unsigned char led_behavior = dsPIC_reg[REG_FORCE_LED1+i].val;
+        switch(led_behavior) {
+            case LED_FORCE_OFF : 
+                ws2812b_setState(i, 0);
+                break;
+            case LED_FORCE_RED : 
+                ws2812b_setColor(i, RED);
+                break;
+            case LED_FORCE_GREEN : 
+                ws2812b_setColor(i, GREEN);
+                break;
+            case LED_FORCE_BLUE : 
+                ws2812b_setColor(i, BLUE);
+                break;
+            case LED_CONTROLED_BY_LIDAR : 
+            default : 
+                ws2812b_setColor(i, (obstacles_detected&(1<<i))==0?OFF_BLACK:RED);
+                break;
+        }
+    }
 }
 
 // ============================================================

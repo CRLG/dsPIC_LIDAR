@@ -33,8 +33,7 @@ typedef enum {
 
 void lidar_init();
 unsigned char lidar_calibration(tTelemeterIndex index);
-unsigned char lidar_settings(tTelemeterIndex index, int iMode, unsigned char isContinuous);
-unsigned char lidar_start(tTelemeterIndex index);
+unsigned char lidar_settings(tTelemeterIndex index, int iMode);
 unsigned char lidar_autotest(tTelemeterIndex index);
 unsigned char lidar_read_distance(tTelemeterIndex index);
 unsigned char lidar_change_i2c_addr(tTelemeterIndex index, unsigned char new_addr);

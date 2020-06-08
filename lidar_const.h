@@ -1,7 +1,7 @@
 #ifndef _LIDAR_CONST_H_
 #define	_LIDAR_CONST_H_
 
-#define NUMBER_OF_TELEMETERS 16
+#define NUMBER_MAX_OF_TELEMETERS 16
 
 typedef enum {
     STATUS_OK = 0,
@@ -16,7 +16,8 @@ typedef enum {
 }T_TELEMETER_STATUS;
 
 typedef enum {
-    LED_NORMAL = 0,
+    LED_CONTROLED_BY_LIDAR = 0,
+    LED_FORCE_OFF,
     LED_FORCE_RED,
     LED_FORCE_GREEN,
     LED_FORCE_BLUE,
@@ -49,6 +50,9 @@ typedef enum {
     REG_STATUS_TELEMETER_14,
     REG_STATUS_TELEMETER_15,
     REG_STATUS_TELEMETER_16,
+    // Alerte distance seuile détectée
+    REG_DISTANCE_ALARM_TELEMETERS_H,    // Alertes groupées : télémètres 1 à 8        
+    REG_DISTANCE_ALARM_TELEMETERS_L,    // Alertes groupées : télémètres 9 à 12    
     // Mesure de distance
     REG_DISTANCE_TELEMETER_1,
     REG_DISTANCE_TELEMETER_2,
@@ -66,11 +70,8 @@ typedef enum {
     REG_DISTANCE_TELEMETER_14,
     REG_DISTANCE_TELEMETER_15,
     REG_DISTANCE_TELEMETER_16,
-    // Alerte distance seuile détectée
-    REG_DISTANCE_ALERT_TELEMETERS_H,    // Alerte groupée : télémètres 1 à 8        
-    REG_DISTANCE_ALERT_TELEMETERS_L,    // Alerte groupée : télémètres 9 à 12    
 
-            // ============================================
+    // ============================================
     // Read write registers
     // ============================================
     // Pour les échanges optimisés/sécurisés (avec checksum) lors des requêtes de lecture
@@ -95,6 +96,23 @@ typedef enum {
     REG_ENABLE_TELEMETER_16,
     REG_ENABLE_TELEMETERS_H,    // Autorisation groupée : 8 bits : télémètre 1 à 8
     REG_ENABLE_TELEMETERS_L,    // Autorisation groupée : 4 bits : télémètres 9 à 12
+    // SEUILS DE DETECTION D'ALARM  [cm]
+    REG_ALARM_THRESHOLD_TELEMETER_1,
+    REG_ALARM_THRESHOLD_TELEMETER_2,
+    REG_ALARM_THRESHOLD_TELEMETER_3,
+    REG_ALARM_THRESHOLD_TELEMETER_4,
+    REG_ALARM_THRESHOLD_TELEMETER_5,
+    REG_ALARM_THRESHOLD_TELEMETER_6,
+    REG_ALARM_THRESHOLD_TELEMETER_7,
+    REG_ALARM_THRESHOLD_TELEMETER_8,
+    REG_ALARM_THRESHOLD_TELEMETER_9,
+    REG_ALARM_THRESHOLD_TELEMETER_10,
+    REG_ALARM_THRESHOLD_TELEMETER_11,
+    REG_ALARM_THRESHOLD_TELEMETER_12,
+    REG_ALARM_THRESHOLD_TELEMETER_13,
+    REG_ALARM_THRESHOLD_TELEMETER_14,
+    REG_ALARM_THRESHOLD_TELEMETER_15,
+    REG_ALARM_THRESHOLD_TELEMETER_16,
     //  ADRESSE I2C DE CHAQUE TELEMETRE
     REG_I2CADDR_TELEMETER_1,
     REG_I2CADDR_TELEMETER_2,
