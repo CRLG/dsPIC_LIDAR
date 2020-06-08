@@ -16,6 +16,10 @@ typedef enum {
     TELEMETER_10,
     TELEMETER_11,
     TELEMETER_12,
+    TELEMETER_13,
+    TELEMETER_14,
+    TELEMETER_15,
+    TELEMETER_16,
     ALL_TELEMETERS = 0xFF
 }tTelemeterIndex;
 
